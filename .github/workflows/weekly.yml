@@ -1,0 +1,47 @@
+name: Weekly Full Refresh
+
+on:
+  schedule:
+    # Sunday at 6:00 UTC = 11:30 AM IST
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+
+jobs:
+  weekly:
+    name: Full pipeline refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system deps (tesseract for OCR fallback)
+        run: sudo apt-get install -y tesseract-ocr
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install Python deps
+        run: uv sync
+
+      - name: Fundamental phase
+        run: uv run python run.py --phase fundamental
+        env: &env
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      - name: Concall phase
+        run: uv run python run.py --phase concall
+        env: *env
+
+      - name: Macro phase
+        run: uv run python run.py --phase macro
+        env: *env
+
+      - name: Score phase
+        run: uv run python run.py --phase score
+        env: *env

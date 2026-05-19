@@ -1,0 +1,16 @@
+.env
+.env.local
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+build/
+runs/*.json
+cache/
+*.db
+
+# Node
+dashboard/node_modules/
+dashboard/.next/
+dashboard/.env.local

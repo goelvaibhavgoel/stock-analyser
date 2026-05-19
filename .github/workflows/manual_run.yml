@@ -1,0 +1,36 @@
+name: Manual Phase Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "Phase to run"
+        required: true
+        default: "technical"
+        type: choice
+        options: [technical, fundamental, concall, macro, score, all]
+
+jobs:
+  run:
+    name: "Run phase: ${{ github.event.inputs.phase }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tesseract
+        run: sudo apt-get install -y tesseract-ocr
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Install deps
+        run: uv sync
+
+      - name: Run
+        run: uv run python run.py --phase ${{ github.event.inputs.phase }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

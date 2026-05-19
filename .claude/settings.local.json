@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/mymac/Desktop/ -name \"DESIGN.md\" 2>/dev/null)",
+      "Read(//Users/mymac/Desktop/**)",
+      "Bash(uv --version)",
+      "Bash(pip3 --version)",
+      "Bash(curl -LsSf https://astral.sh/uv/install.sh)",
+      "Bash(sh)",
+      "Bash(~/.local/bin/uv run *)",
+      "Bash(brew install *)",
+      "Bash(curl -fsSL https://nodejs.org/dist/v20.19.2/node-v20.19.2-darwin-arm64.tar.gz -o /tmp/node.tar.gz)",
+      "Bash(mkdir -p ~/.local)",
+      "Bash(tar -xz -C ~/.local --strip-components=1 -f /tmp/node.tar.gz)",
+      "Bash(~/.local/bin/node --version)",
+      "Bash(~/.local/bin/npm --version)",
+      "Bash(~/.local/bin/npm install *)",
+      "Bash(~/.local/bin/npm run *)",
+      "Read(//tmp/**)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(uv run *)"
+    ]
+  }
+}
