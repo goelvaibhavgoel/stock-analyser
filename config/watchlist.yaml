@@ -1,15 +1,25 @@
 stocks:
   # ── BANKING / NBFC ────────────────────────────────────────────────────
   - { nse_code: CGCL,        bse_code: "536925", name: Capri Global Capital Ltd,            sector: Banking, market_cap_bucket: MID,   groww_slug: capri-global-capital-ltd }
+  - { nse_code: MONARCH,     bse_code: "511551", name: Monarch Networth Capital Ltd,        sector: Banking, market_cap_bucket: MID,   groww_slug: monarch-networth-capital-ltd }
 
   # ── IT / FINTECH ──────────────────────────────────────────────────────
   - { nse_code: ZAGGLE,      bse_code: "543685", name: Zaggle Prepaid Ocean Services Ltd,   sector: IT,      market_cap_bucket: MID,   groww_slug: zaggle-prepaid-ocean-services-ltd }
   - { nse_code: ETERNAL,     bse_code: "543320", name: Eternal Ltd (formerly Zomato),       sector: IT,      market_cap_bucket: LARGE, groww_slug: zomato-ltd }
+  - { nse_code: COFORGE,     bse_code: "532541", name: Coforge Ltd,                         sector: IT,      market_cap_bucket: LARGE, groww_slug: coforge-ltd }
+  - { nse_code: EBGNG,       bse_code: "544455", name: GNG Electronics Ltd,                 sector: IT,      market_cap_bucket: SMALL, groww_slug: gng-electronics-ltd }
 
   # ── ENERGY ───────────────────────────────────────────────────────────
   - { nse_code: JSWENERGY,   bse_code: "533148", name: JSW Energy Ltd,                      sector: Energy,  market_cap_bucket: LARGE, groww_slug: jsw-energy-ltd }
   - { nse_code: INOXWIND,    bse_code: "539083", name: Inox Wind Ltd,                       sector: Energy,  market_cap_bucket: MID,   groww_slug: inox-wind-ltd }
   - { nse_code: GENUSPOWER,  bse_code: "506190", name: Genus Power Infrastructures Ltd,     sector: Energy,  market_cap_bucket: MID,   groww_slug: genus-power-infrastructures-ltd }
+  - { nse_code: EMMVEE,      bse_code: "544608", name: Emmvee Photovoltaic Power Ltd,        sector: Energy,  market_cap_bucket: SMALL, groww_slug: emmvee-photovoltaic-power-ltd }
+  - { nse_code: WAAREERTL,   bse_code: "534618", name: Waaree Renewable Technologies Ltd,   sector: Energy,  market_cap_bucket: SMALL, groww_slug: waaree-renewable-technologies-ltd }
+  - { nse_code: UTLSOLAR,    bse_code: "544613", name: Fujiyama Power Systems Ltd,          sector: Energy,  market_cap_bucket: MID,   groww_slug: fujiyama-power-systems-ltd }
+  - { nse_code: ANTELOPUS,   bse_code: "530075", name: Antelopus Selan Energy Ltd,          sector: Energy,  market_cap_bucket: SMALL, groww_slug: antelopus-selan-energy-ltd }
+  - { nse_code: KPEL,        bse_code: "539686", name: K.P. Energy Ltd,                     sector: Energy,  market_cap_bucket: SMALL, groww_slug: kp-energy-ltd }
+  - { nse_code: SOLEX,       bse_code: "532566", name: Solex Energy Ltd,                    sector: Energy,  market_cap_bucket: SMALL, groww_slug: solex-energy-ltd }
+  - { nse_code: SCHNEIDER,   bse_code: "534139", name: Schneider Electric Infrastructure Ltd, sector: Energy, market_cap_bucket: LARGE, groww_slug: schneider-electric-infrastructure-ltd }
 
   # ── INFRA ────────────────────────────────────────────────────────────
   - { nse_code: NBCC,        bse_code: "534309", name: NBCC (India) Ltd,                    sector: Infra,   market_cap_bucket: MID,   groww_slug: nbcc-india-ltd }
@@ -17,9 +27,14 @@ stocks:
   - { nse_code: EPACKPEB,    bse_code: "544540", name: Epack Prefab Solutions Ltd,          sector: Infra,   market_cap_bucket: SMALL, groww_slug: epack-prefab-technologies-ltd }
   - { nse_code: POLYCAB,     bse_code: "542652", name: Polycab India Ltd,                   sector: Infra,   market_cap_bucket: LARGE, groww_slug: polycab-india-ltd }
   - { nse_code: KEI,         bse_code: "517569", name: KEI Industries Ltd,                  sector: Infra,   market_cap_bucket: MID,   groww_slug: kei-industries-ltd }
+  - { nse_code: CEMPRO,      bse_code: "532947", name: Cemindia Projects Ltd,               sector: Infra,   market_cap_bucket: MID,   groww_slug: cemindia-projects-ltd }
+  - { nse_code: GESHIP,      bse_code: "500620", name: Great Eastern Shipping Company Ltd,  sector: Infra,   market_cap_bucket: LARGE, groww_slug: great-eastern-shipping-company-ltd }
+  - { nse_code: EIEL,        bse_code: "544290", name: Enviro Infra Engineers Ltd,          sector: Infra,   market_cap_bucket: SMALL, groww_slug: enviro-infra-engineers-ltd }
+  - { nse_code: TARIL,       bse_code: "532953", name: Transformers & Rectifiers India Ltd, sector: Infra,   market_cap_bucket: MID,   groww_slug: transformers-and-rectifiers-india-ltd }
 
   # ── METALS ───────────────────────────────────────────────────────────
   - { nse_code: VENUSPIPES,  bse_code: "543249", name: Venus Pipes and Tubes Ltd,           sector: Metals,  market_cap_bucket: SMALL, groww_slug: venus-pipes-tubes-ltd }
+  - { nse_code: LLOYDSME,    bse_code: "512455", name: Lloyds Metals & Energy Ltd,          sector: Metals,  market_cap_bucket: LARGE, groww_slug: lloyds-metals-and-energy-ltd }
 
   # ── REALTY ───────────────────────────────────────────────────────────
   - { nse_code: EFCIL,       bse_code: "512008", name: EFC (I) Ltd,                         sector: Realty,  market_cap_bucket: SMALL }
@@ -33,10 +48,22 @@ stocks:
   # ── CHEMICALS / AGRO ─────────────────────────────────────────────────
   - { nse_code: DHANUKA,     bse_code: "507717", name: Dhanuka Agritech Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: dhanuka-agritech-ltd }
   - { nse_code: GNFC,        bse_code: "500670", name: Gujarat Narmada Valley Fertilizers & Chemicals Ltd, sector: Chemicals, market_cap_bucket: MID, groww_slug: gujarat-narmada-valley-fertilizers-chemicals-ltd }
+  - { nse_code: GOKULAGRO,   bse_code: "539725", name: Gokul Agro Resources Ltd,           sector: Chemicals, market_cap_bucket: SMALL, groww_slug: gokul-agro-resources-ltd }
+  - { nse_code: BLACKROSE,   bse_code: "514183", name: Black Rose Industries Ltd,           sector: Chemicals, market_cap_bucket: SMALL, groww_slug: black-rose-industries-ltd }
+  - { nse_code: AARTIIND,    bse_code: "524208", name: Aarti Industries Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: aarti-industries-ltd }
+
+  # ── DEFENCE / AEROSPACE ──────────────────────────────────────────────
+  - { nse_code: DATAPATTNS,  bse_code: "543428", name: Data Patterns (India) Ltd,           sector: Defence, market_cap_bucket: MID,   groww_slug: data-patterns-india-ltd }
+  - { nse_code: APOLLO,      bse_code: "540879", name: Apollo Micro Systems Ltd,            sector: Defence, market_cap_bucket: MID,   groww_slug: apollo-micro-systems-ltd }
 
   # ── AUTO ─────────────────────────────────────────────────────────────
   - { nse_code: RANEHOLDIN,  bse_code: "505036", name: Rane Holdings Ltd,                   sector: Auto,    market_cap_bucket: SMALL, groww_slug: rane-holdings-ltd }
+  - { nse_code: PRECAM,      bse_code: "539636", name: Precision Camshafts Ltd,             sector: Auto,    market_cap_bucket: SMALL, groww_slug: precision-camshafts-ltd }
 
   # ── FMCG / CONSUMER ──────────────────────────────────────────────────
   - { nse_code: SKYGOLD,     bse_code: "541967", name: Sky Gold Ltd,                        sector: FMCG,    market_cap_bucket: SMALL, groww_slug: sky-gold-ltd }
   - { nse_code: SFL,         bse_code: "540203", name: Sheela Foam Ltd,                     sector: FMCG,    market_cap_bucket: MID,   groww_slug: sheela-foam-ltd }
+  - { nse_code: IFBAGRO,     bse_code: "507438", name: IFB Agro Industries Ltd,             sector: FMCG,    market_cap_bucket: SMALL, groww_slug: ifb-agro-industries-ltd }
+  - { nse_code: MANORAMA,    bse_code: "541974", name: Manorama Industries Ltd,             sector: FMCG,    market_cap_bucket: MID,   groww_slug: manorama-industries-ltd }
+  - { nse_code: ABDL,        bse_code: "544203", name: Allied Blenders & Distillers Ltd,    sector: FMCG,    market_cap_bucket: MID,   groww_slug: allied-blenders-and-distillers-ltd }
+  - { nse_code: VINCOFE,     bse_code: "538920", name: Vintage Coffee & Beverages Ltd,      sector: FMCG,    market_cap_bucket: SMALL, groww_slug: vintage-coffee-and-beverages-ltd }

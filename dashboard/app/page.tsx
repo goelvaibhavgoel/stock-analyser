@@ -193,8 +193,11 @@ export default async function WatchlistPage() {
                 ? ((Number(q.cmp) - Number(q.dma_50)) / Number(q.dma_50)) * 100
                 : null;
 
-              const dmaSignal = q?.dma_50 && q?.dma_200
-                ? Number(q.dma_50) > Number(q.dma_200) ? "text-emerald-400" : "text-red-400"
+              const dma200Color = q?.cmp && q?.dma_200
+                ? Number(q.cmp) > Number(q.dma_200) ? "text-emerald-400" : "text-red-400"
+                : "text-gray-400";
+              const dma50Color = q?.cmp && q?.dma_50
+                ? Number(q.cmp) > Number(q.dma_50) ? "text-emerald-400" : "text-red-400"
                 : "text-gray-400";
 
               const hasEvent = stocksWithEvents.has(row.id);
@@ -252,14 +255,18 @@ export default async function WatchlistPage() {
                     {np != null ? (npGrowth != null ? pctFmt(npGrowth) : "—") : "—"}
                   </td>
                   <td className="px-3 text-right">
-                    <span className={dmaSignal}>
+                    <span className={dma200Color}>
                       {q?.dma_200 != null ? fmt(Number(q.dma_200)) : "—"}
                     </span>
                   </td>
                   <td className="px-3 text-right">
-                    <span className={dmaSignal}>
+                    <span className={dma50Color}>
                       {q?.dma_50 != null ? fmt(Number(q.dma_50)) : "—"}
                     </span>
+                    {q?.dma_50 != null && q?.dma_200 != null &&
+                      Math.abs(Number(q.dma_50) - Number(q.dma_200)) / Number(q.dma_200) <= 0.02 && (
+                      <span className="ml-1 text-yellow-400" title="DMA-50 within 2% of DMA-200">★</span>
+                    )}
                   </td>
                   <td className={`px-3 text-right font-medium ${cmpDmaColor(cmpVsDma50)}`}>
                     {cmpVsDma50 != null ? pctFmt(cmpVsDma50) : "—"}
@@ -275,7 +282,7 @@ export default async function WatchlistPage() {
       </div>
 
       <div className="mt-3 flex gap-6 text-xs text-gray-600">
-        <span>DMA-50 <span className="text-emerald-500">green</span>=above DMA-200</span>
+        <span>DMA-200/50: <span className="text-emerald-500">green</span>=CMP above · <span className="text-red-400">red</span>=CMP below · <span className="text-yellow-400">★</span>=DMA-50 within 2% of DMA-200</span>
         <span>Rev/NP growth: <span className="text-emerald-400">≥20%</span> · <span className="text-orange-400">0-10%</span> · <span className="text-red-400">negative</span></span>
         <span>CMP/DMA-50: <span className="text-emerald-400">+ve</span>=above · <span className="text-red-400">-ve</span>=below</span>
         <span>Vol ratio: <span className="text-emerald-400">≥1.5×</span> elevated · <span className="text-red-400">≤0.7×</span> suppressed</span>
