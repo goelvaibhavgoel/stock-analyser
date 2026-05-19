@@ -1,29 +1,32 @@
-name: Daily Technical Refresh
+name: Daily Pipeline Refresh
 
 on:
   schedule:
-    # Weekdays at 10:30 UTC = 4:00 PM IST (30 min after NSE close)
-    - cron: "30 10 * * 1-5"
+    # Weekdays at 08:30 UTC = 2:00 PM IST
+    - cron: "30 8 * * 1-5"
   workflow_dispatch:
     inputs:
-      phase:
-        description: "Pipeline phase to run"
+      phases:
+        description: "Phases to run (comma-separated)"
         required: false
-        default: "technical"
-        type: choice
-        options: [technical, fundamental, concall, macro, score, all]
+        default: "technical,fundamental,macro"
 
 jobs:
   refresh:
-    name: Run pipeline
+    name: Refresh pipeline
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
+
+    env: &env
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install system deps (tesseract for OCR fallback)
+      - name: Install system deps
         run: sudo apt-get install -y tesseract-ocr
 
       - name: Install uv
@@ -34,9 +37,23 @@ jobs:
       - name: Install Python deps
         run: uv sync
 
-      - name: Run pipeline
-        run: uv run python run.py --phase ${{ github.event.inputs.phase || 'technical' }}
+      - name: Technical phase
+        if: ${{ contains(github.event.inputs.phases || 'technical,fundamental,macro', 'technical') }}
+        run: uv run python run.py --phase technical
+        env: *env
+
+      - name: Fundamental phase
+        if: ${{ contains(github.event.inputs.phases || 'technical,fundamental,macro', 'fundamental') }}
+        run: uv run python run.py --phase fundamental
+        env: *env
+
+      - name: Macro phase
+        if: ${{ contains(github.event.inputs.phases || 'technical,fundamental,macro', 'macro') }}
+        run: uv run python run.py --phase macro
+        env: *env
+
+      - name: Trigger Vercel redeploy
+        if: env.VERCEL_DEPLOY_HOOK_URL != ''
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: curl -s -X POST "$VERCEL_DEPLOY_HOOK_URL"
