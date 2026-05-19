@@ -28,7 +28,7 @@ stocks:
   - { nse_code: MAXHEALTH,   bse_code: "543220", name: Max Healthcare Institute Ltd,         sector: Healthcare, market_cap_bucket: LARGE, groww_slug: max-healthcare-institute-ltd }
   - { nse_code: GLAND,       bse_code: "543245", name: Gland Pharma Ltd,                    sector: Pharma,  market_cap_bucket: MID,   groww_slug: gland-pharma-ltd }
   - { nse_code: CAPLIPOINT,  bse_code: "524742", name: Caplin Point Laboratories Ltd,       sector: Pharma,  market_cap_bucket: MID,   groww_slug: caplin-point-laboratories-ltd }
-  - { nse_code: HESTER,      bse_code: "524669", name: Hester Biosciences Ltd,              sector: Pharma,  market_cap_bucket: SMALL, groww_slug: hester-biosciences-ltd }
+  - { nse_code: HESTER,      bse_code: "524669", name: Hester Biosciences Ltd,              sector: Pharma,  market_cap_bucket: SMALL, groww_slug: hester-biosciences-ltd, screener_code: HESTERBIO }
 
   # ── CHEMICALS / AGRO ─────────────────────────────────────────────────
   - { nse_code: DHANUKA,     bse_code: "507717", name: Dhanuka Agritech Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: dhanuka-agritech-ltd }
