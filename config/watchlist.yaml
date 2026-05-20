@@ -49,7 +49,7 @@ stocks:
   - { nse_code: DHANUKA,     bse_code: "507717", name: Dhanuka Agritech Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: dhanuka-agritech-ltd }
   - { nse_code: GNFC,        bse_code: "500670", name: Gujarat Narmada Valley Fertilizers & Chemicals Ltd, sector: Chemicals, market_cap_bucket: MID, groww_slug: gujarat-narmada-valley-fertilizers-chemicals-ltd }
   - { nse_code: GOKULAGRO,   bse_code: "539725", name: Gokul Agro Resources Ltd,           sector: Chemicals, market_cap_bucket: SMALL, groww_slug: gokul-agro-resources-ltd }
-  - { nse_code: BLACKROSE,   bse_code: "514183", name: Black Rose Industries Ltd,           sector: Chemicals, market_cap_bucket: SMALL, groww_slug: black-rose-industries-ltd }
+  - { nse_code: BLACKROSE,   bse_code: "514183", name: Black Rose Industries Ltd,           sector: Chemicals, market_cap_bucket: SMALL, groww_slug: black-rose-industries-ltd, force_standalone: true }
   - { nse_code: AARTIIND,    bse_code: "524208", name: Aarti Industries Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: aarti-industries-ltd }
 
   # ── DEFENCE / AEROSPACE ──────────────────────────────────────────────

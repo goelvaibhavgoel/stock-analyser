@@ -101,12 +101,24 @@ def _float(text: str) -> float | None:
 
 # ── HTML fetch + cache ────────────────────────────────────────────────────────
 
-def _fetch_page(screener_code: str) -> tuple[bytes, bool] | None:
+def _fetch_page(screener_code: str, force_standalone: bool = False) -> tuple[bytes, bool] | None:
     """Fetch screener.in page for a stock. Returns (html_bytes, is_consolidated).
 
     Tries consolidated first; falls back to standalone if consolidated is
     missing target FYs (e.g. results published standalone before consolidation).
+    Pass force_standalone=True to skip consolidated entirely (use when
+    screener's consolidated quarterly data is inconsistent with their own annual).
     """
+    if force_standalone:
+        url = f"{SCREENER_BASE}/{screener_code}/"
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=20)
+            r.raise_for_status()
+            return r.content, False
+        except Exception as exc:
+            log.warning("%s: screener.in standalone fetch failed: %s", screener_code, exc)
+            return None
+
     pages = []
     for suffix, consolidated in [("consolidated/", True), ("", False)]:
         url = f"{SCREENER_BASE}/{screener_code}/{suffix}"
@@ -141,9 +153,9 @@ def _fetch_page(screener_code: str) -> tuple[bytes, bool] | None:
     return pages[0] if consolidated_count >= standalone_count else pages[1]
 
 
-def _get_html(screener_code: str) -> tuple[bytes, bool] | None:
+def _get_html(screener_code: str, force_standalone: bool = False) -> tuple[bytes, bool] | None:
     """Return cached HTML if unchanged; otherwise fetch and cache."""
-    result = _fetch_page(screener_code)
+    result = _fetch_page(screener_code, force_standalone=force_standalone)
     if not result:
         return None
     content, consolidated = result
@@ -414,7 +426,7 @@ def _upsert_quarterly(stock_id: int, rows: list[dict]) -> None:
 
 # ── public entry point ────────────────────────────────────────────────────────
 
-def fetch_and_store(nse_code: str, screener_code: str | None = None) -> bool:
+def fetch_and_store(nse_code: str, screener_code: str | None = None, force_standalone: bool = False) -> bool:
     screener_code = screener_code or nse_code
     stock_id = get_stock_id(nse_code)
     if stock_id is None:
@@ -436,7 +448,7 @@ def fetch_and_store(nse_code: str, screener_code: str | None = None) -> bool:
     if not need_annual and not need_quarters:
         log.info("%s: all static data already in DB — skipping screener.in fetch", nse_code)
         # Still update PE history (it's a market-derived reference)
-        result = _get_html(screener_code)
+        result = _get_html(screener_code, force_standalone=force_standalone)
         if result:
             soup = BeautifulSoup(result[0], "lxml")
             pe_hist = _fetch_pe_history(soup)
@@ -447,7 +459,7 @@ def fetch_and_store(nse_code: str, screener_code: str | None = None) -> bool:
                 ).eq("stock_id", stock_id).execute()
         return True
 
-    result = _get_html(screener_code)
+    result = _get_html(screener_code, force_standalone=force_standalone)
     if not result:
         log.warning("%s: could not fetch screener.in page", nse_code)
         return False
@@ -484,4 +496,8 @@ def run(stocks: list[dict]) -> None:
     for i, s in enumerate(stocks):
         if i > 0:
             time.sleep(DELAY_SECS)
-        fetch_and_store(s["nse_code"], screener_code=s.get("screener_code"))
+        fetch_and_store(
+            s["nse_code"],
+            screener_code=s.get("screener_code"),
+            force_standalone=bool(s.get("force_standalone")),
+        )
