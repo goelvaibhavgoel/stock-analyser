@@ -2,10 +2,10 @@
 
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 
-// ── Supabase browser client (module-level, not re-created per render) ─────────
+// ── Supabase browser client ───────────────────────────────────────────────────
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -40,6 +40,9 @@ export type RowData = {
   funds: Record<string, FundData>;
   fy26Complete: boolean;
 };
+
+type SortField = "cmpDma50" | "volRatio" | null;
+type SortDir   = "asc" | "desc";
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 const CAP_STYLE: Record<string, string> = {
@@ -110,6 +113,50 @@ function yoy(latest: number | null, prev: number | null): number | null {
   return ((latest - prev) / Math.abs(prev)) * 100;
 }
 
+function cmpVsDma50Val(q: QuoteData | null): number | null {
+  return q?.cmp && q?.dma_50
+    ? ((Number(q.cmp) - Number(q.dma_50)) / Number(q.dma_50)) * 100
+    : null;
+}
+
+// ── Small icons ───────────────────────────────────────────────────────────────
+function ExternalLinkIcon() {
+  return (
+    <svg
+      className="inline w-2.5 h-2.5 shrink-0 text-gray-600 hover:text-gray-300 transition-colors"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+      />
+    </svg>
+  );
+}
+
+function SortArrows({
+  field,
+  sortField,
+  sortDir,
+}: {
+  field: SortField;
+  sortField: SortField;
+  sortDir: SortDir;
+}) {
+  if (sortField !== field) {
+    return <span className="text-gray-700 leading-none">↕</span>;
+  }
+  return (
+    <span className="text-blue-400 leading-none">
+      {sortDir === "asc" ? "↑" : "↓"}
+    </span>
+  );
+}
+
 // ── Fetch latest quotes from Supabase ─────────────────────────────────────────
 async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, QuoteData>> {
   const { data } = await supabase
@@ -129,9 +176,9 @@ async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, Quo
 // ── Button state ──────────────────────────────────────────────────────────────
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
 
-const QUICK_WAIT_S = 90;      // technical pipeline: ~90s
-const ALL_WAIT_S   = 8 * 60;  // full pipeline: ~8 min
-const AUTO_REFRESH_MS = 2 * 60 * 60 * 1000; // 2 hours
+const QUICK_WAIT_S = 90;
+const ALL_WAIT_S   = 8 * 60;
+const AUTO_REFRESH_MS = 2 * 60 * 60 * 1000;
 
 function Spinner() {
   return (
@@ -151,21 +198,18 @@ function RefreshBtn({
   label: string;
 }) {
   const busy = state !== "idle" && state !== "done" && state !== "error";
-  const baseClass = "inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors select-none";
+  const baseClass =
+    "inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors select-none";
 
-  let colorClass = "bg-gray-800 border border-gray-600 hover:border-gray-400 text-gray-300 cursor-pointer";
-  if (busy)            colorClass = "bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed";
+  let colorClass =
+    "bg-gray-800 border border-gray-600 hover:border-gray-400 text-gray-300 cursor-pointer";
+  if (busy)             colorClass = "bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed";
   if (state === "done") colorClass = "bg-emerald-900/60 border border-emerald-700 text-emerald-300 cursor-not-allowed";
   if (state === "error") colorClass = "bg-red-900/60 border border-red-700 text-red-300 cursor-not-allowed";
 
   return (
-    <button
-      onClick={onClick}
-      disabled={busy}
-      className={`${baseClass} ${colorClass}`}
-      title={label}
-    >
-      {state === "idle"      && <>{label}</>}
+    <button onClick={onClick} disabled={busy} className={`${baseClass} ${colorClass}`}>
+      {state === "idle"       && <>{label}</>}
       {state === "triggering" && <><Spinner /> Triggering…</>}
       {state === "waiting"    && <><Spinner /> {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}</>}
       {state === "done"       && <>✓ Updated</>}
@@ -188,7 +232,6 @@ export function WatchlistClient({
   const stockIds = initialRows.map((r) => r.id);
   const stocksWithEvents = new Set(stocksWithEventsArr);
 
-  // Quotes can be refreshed client-side; fundamentals come only from server re-render
   const [quoteMap, setQuoteMap] = useState<Record<number, QuoteData>>(() => {
     const m: Record<number, QuoteData> = {};
     for (const r of initialRows) {
@@ -197,12 +240,17 @@ export function WatchlistClient({
     return m;
   });
 
-  const [latestDate, setLatestDate] = useState(initialDate);
+  const [latestDate, setLatestDate]             = useState(initialDate);
+  const [refreshState, setRefreshState]         = useState<BtnState>("idle");
+  const [refreshAllState, setRefreshAllState]   = useState<BtnState>("idle");
+  const [countdown, setCountdown]               = useState(0);
+  const [countdownAll, setCountdownAll]         = useState(0);
 
-  const [refreshState, setRefreshState]       = useState<BtnState>("idle");
-  const [refreshAllState, setRefreshAllState] = useState<BtnState>("idle");
-  const [countdown, setCountdown]             = useState(0);
-  const [countdownAll, setCountdownAll]       = useState(0);
+  // ── Controls state ────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery]           = useState("");
+  const [filterGoldenCross, setFilterGoldenCross] = useState(false);
+  const [sortField, setSortField]               = useState<SortField>(null);
+  const [sortDir, setSortDir]                   = useState<SortDir>("desc");
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerAllRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -219,13 +267,11 @@ export function WatchlistClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockIds.join(",")]);
 
-  // Auto-refresh CMP & PE every 2 hours
   useEffect(() => {
     const id = setInterval(reloadQuotes, AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [reloadQuotes]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current)    clearInterval(timerRef.current);
@@ -284,7 +330,6 @@ export function WatchlistClient({
       if (!res.ok) throw new Error();
       setRefreshAllState("waiting");
       startCountdown(ALL_WAIT_S, setCountdownAll, timerAllRef, () => {
-        // Full re-render from server to pick up new fundamentals
         router.refresh();
         setRefreshAllState("done");
         setTimeout(() => setRefreshAllState("idle"), 3000);
@@ -295,30 +340,105 @@ export function WatchlistClient({
     }
   };
 
+  const toggleSort = (field: "cmpDma50" | "volRatio") => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir("desc");
+    } else if (sortDir === "desc") {
+      setSortDir("asc");
+    } else {
+      setSortField(null);
+    }
+  };
+
+  // ── Filtered + sorted rows ────────────────────────────────────────────────
+  const displayRows = useMemo(() => {
+    let rows = initialRows;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      rows = rows.filter(
+        (r) =>
+          r.nse_code.toLowerCase().includes(q) ||
+          r.name.toLowerCase().includes(q)
+      );
+    }
+
+    if (filterGoldenCross) {
+      rows = rows.filter((r) => {
+        const q = quoteMap[r.id];
+        return (
+          q?.dma_50 != null &&
+          q?.dma_200 != null &&
+          Number(q.dma_50) > Number(q.dma_200)
+        );
+      });
+    }
+
+    if (sortField) {
+      rows = [...rows].sort((a, b) => {
+        let av: number | null = null;
+        let bv: number | null = null;
+        if (sortField === "cmpDma50") {
+          av = cmpVsDma50Val(quoteMap[a.id] ?? null);
+          bv = cmpVsDma50Val(quoteMap[b.id] ?? null);
+        } else {
+          const qa = quoteMap[a.id];
+          const qb = quoteMap[b.id];
+          av = qa ? volRatio(qa.volume_7d, qa.avg_volume_30d) : null;
+          bv = qb ? volRatio(qb.volume_7d, qb.avg_volume_30d) : null;
+        }
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        return sortDir === "asc" ? av - bv : bv - av;
+      });
+    }
+
+    return rows;
+  }, [initialRows, searchQuery, filterGoldenCross, sortField, sortDir, quoteMap]);
+
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <h1 className="text-xl font-semibold">Watchlist</h1>
-        <RefreshBtn
-          state={refreshState}
-          countdown={countdown}
-          onClick={handleRefresh}
-          label="↻ Refresh"
-        />
-        <RefreshBtn
-          state={refreshAllState}
-          countdown={countdownAll}
-          onClick={handleRefreshAll}
-          label="↻ Refresh All"
-        />
+        <RefreshBtn state={refreshState} countdown={countdown} onClick={handleRefresh} label="↻ Refresh" />
+        <RefreshBtn state={refreshAllState} countdown={countdownAll} onClick={handleRefreshAll} label="↻ Refresh All" />
         <span className="ml-auto text-xs text-gray-500">
           {initialRows.length} stocks · as of {latestDate}
         </span>
       </div>
 
+      {/* Controls bar */}
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <input
+          type="text"
+          placeholder="Search stock…"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded px-3 py-1.5 w-44 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+        />
+        <button
+          onClick={() => setFilterGoldenCross((v) => !v)}
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+            filterGoldenCross
+              ? "bg-emerald-900/50 border-emerald-600 text-emerald-300"
+              : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500"
+          }`}
+        >
+          <span className={filterGoldenCross ? "text-emerald-400" : "text-gray-600"}>▲</span>
+          50 DMA &gt; 200 DMA
+        </button>
+        {(searchQuery || filterGoldenCross || sortField) && (
+          <span className="text-xs text-gray-500">
+            {displayRows.length} of {initialRows.length} shown
+          </span>
+        )}
+      </div>
+
       {/* Table */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-10rem)] rounded-lg border border-gray-800">
+      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-12rem)] rounded-lg border border-gray-800">
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 z-10">
             <tr className="bg-gray-900 border-b border-gray-700 text-gray-400 text-xs uppercase tracking-wide">
@@ -341,28 +461,39 @@ export function WatchlistClient({
               </th>
               <th className="px-3 text-right bg-gray-900">200 DMA</th>
               <th className="px-3 text-right bg-gray-900">50 DMA</th>
-              <th className="px-3 text-right bg-gray-900">
-                CMP/DMA-50<br /><span className="text-gray-600 normal-case">% diff</span>
+              <th
+                className="px-3 text-right bg-gray-900 cursor-pointer hover:text-gray-200 select-none"
+                onClick={() => toggleSort("cmpDma50")}
+              >
+                <div className="flex items-center justify-end gap-1">
+                  CMP/DMA-50
+                  <SortArrows field="cmpDma50" sortField={sortField} sortDir={sortDir} />
+                </div>
+                <span className="text-gray-600 normal-case font-normal">% diff</span>
               </th>
-              <th className="px-4 text-right bg-gray-900">
-                Vol Ratio<br /><span className="text-gray-600 normal-case">7d/30d</span>
+              <th
+                className="px-4 text-right bg-gray-900 cursor-pointer hover:text-gray-200 select-none"
+                onClick={() => toggleSort("volRatio")}
+              >
+                <div className="flex items-center justify-end gap-1">
+                  Vol Ratio
+                  <SortArrows field="volRatio" sortField={sortField} sortDir={sortDir} />
+                </div>
+                <span className="text-gray-600 normal-case font-normal">7d/30d</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            {initialRows.map((row) => {
-              const q = quoteMap[row.id] ?? null;
-              const fy26 = row.fy26Complete ? row.funds["FY26"] : null;
-              const fy25 = row.funds["FY25"];
-
-              const rev      = fy26?.revenue    ?? null;
-              const np       = fy26?.net_profit ?? null;
+            {displayRows.map((row) => {
+              const q         = quoteMap[row.id] ?? null;
+              const fy26      = row.fy26Complete ? row.funds["FY26"] : null;
+              const fy25      = row.funds["FY25"];
+              const rev       = fy26?.revenue    ?? null;
+              const np        = fy26?.net_profit ?? null;
               const revGrowth = yoy(rev, fy25?.revenue    ?? null);
               const npGrowth  = yoy(np,  fy25?.net_profit ?? null);
               const vRatio    = q ? volRatio(q.volume_7d, q.avg_volume_30d) : null;
-              const cmpVsDma50 = q?.cmp && q?.dma_50
-                ? ((Number(q.cmp) - Number(q.dma_50)) / Number(q.dma_50)) * 100
-                : null;
+              const cmpDma50  = cmpVsDma50Val(q);
 
               const dma200Color = q?.cmp && q?.dma_200
                 ? Number(q.cmp) > Number(q.dma_200) ? "text-emerald-400" : "text-red-400"
@@ -386,6 +517,15 @@ export function WatchlistClient({
                       >
                         {row.nse_code}
                       </Link>
+                      <a
+                        href={`https://www.screener.in/company/${row.nse_code}/`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open on Screener.in"
+                        className="flex items-center"
+                      >
+                        <ExternalLinkIcon />
+                      </a>
                       {hasEvent && (
                         <span
                           className="inline-block w-2 h-2 rounded-full bg-emerald-400 shrink-0"
@@ -449,13 +589,11 @@ export function WatchlistClient({
                     {q?.dma_50 != null &&
                       q?.dma_200 != null &&
                       Math.abs(Number(q.dma_50) - Number(q.dma_200)) / Number(q.dma_200) <= 0.02 && (
-                        <span className="ml-1 text-yellow-400" title="DMA-50 within 2% of DMA-200">
-                          ★
-                        </span>
+                        <span className="ml-1 text-yellow-400" title="DMA-50 within 2% of DMA-200">★</span>
                       )}
                   </td>
-                  <td className={`px-3 text-right font-medium ${cmpDmaColor(cmpVsDma50)}`}>
-                    {cmpVsDma50 != null ? pctFmt(cmpVsDma50) : "—"}
+                  <td className={`px-3 text-right font-medium ${cmpDmaColor(cmpDma50)}`}>
+                    {cmpDma50 != null ? pctFmt(cmpDma50) : "—"}
                   </td>
                   <td className={`px-4 text-right font-medium ${volRatioColor(vRatio)}`}>
                     {vRatio != null ? vRatio.toFixed(2) + "×" : "—"}
