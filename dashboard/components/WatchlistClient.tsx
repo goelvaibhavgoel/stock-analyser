@@ -157,6 +157,15 @@ function SortArrows({
   );
 }
 
+// ── Market-hours guard (IST = UTC+5:30, Mon–Fri 9:15–16:00) ─────────────────
+function isMarketHours(): boolean {
+  const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+  const day = nowIST.getUTCDay(); // 0=Sun … 6=Sat
+  if (day === 0 || day === 6) return false;
+  const mins = nowIST.getUTCHours() * 60 + nowIST.getUTCMinutes();
+  return mins >= 9 * 60 + 15 && mins < 16 * 60;
+}
+
 // ── Fetch latest quotes from Supabase ─────────────────────────────────────────
 async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, QuoteData>> {
   const { data } = await supabase
@@ -173,12 +182,30 @@ async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, Quo
   return map;
 }
 
+// CMP-only fetch — does NOT touch PE or any other field
+async function fetchLatestCmp(
+  stockIds: number[]
+): Promise<Record<number, { cmp: number | null; pct_change: number | null }>> {
+  const { data } = await supabase
+    .from("daily_quotes")
+    .select("stock_id,cmp,pct_change")
+    .in("stock_id", stockIds)
+    .order("date", { ascending: false })
+    .limit(stockIds.length * 3);
+
+  const map: Record<number, { cmp: number | null; pct_change: number | null }> = {};
+  for (const q of (data ?? []) as any[]) {
+    if (!map[q.stock_id]) map[q.stock_id] = { cmp: q.cmp, pct_change: q.pct_change };
+  }
+  return map;
+}
+
 // ── Button state ──────────────────────────────────────────────────────────────
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
 
 const QUICK_WAIT_S = 90;
 const ALL_WAIT_S   = 8 * 60;
-const AUTO_REFRESH_MS = 2 * 60 * 60 * 1000;
+const AUTO_REFRESH_MS = 60 * 60 * 1000; // 1 hour (only fires during market hours)
 
 function Spinner() {
   return (
@@ -255,6 +282,7 @@ export function WatchlistClient({
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerAllRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Full reload (used by Refresh / Refresh All buttons)
   const reloadQuotes = useCallback(async () => {
     const fresh = await fetchLatestQuotes(stockIds);
     setQuoteMap(fresh);
@@ -267,10 +295,27 @@ export function WatchlistClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockIds.join(",")]);
 
+  // CMP-only reload — runs hourly during market hours, never touches PE
+  const reloadCmp = useCallback(async () => {
+    const fresh = await fetchLatestCmp(stockIds);
+    setQuoteMap((prev) => {
+      const next = { ...prev };
+      for (const [idStr, patch] of Object.entries(fresh)) {
+        const id = Number(idStr);
+        if (next[id]) next[id] = { ...next[id], ...patch };
+      }
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stockIds.join(",")]);
+
+  // Auto-refresh CMP every hour, Mon–Fri 9:15 AM–4:00 PM IST only
   useEffect(() => {
-    const id = setInterval(reloadQuotes, AUTO_REFRESH_MS);
+    const id = setInterval(() => {
+      if (isMarketHours()) reloadCmp();
+    }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
-  }, [reloadQuotes]);
+  }, [reloadCmp]);
 
   useEffect(() => {
     return () => {
@@ -629,7 +674,7 @@ export function WatchlistClient({
           <span className="text-emerald-400">≥1.5×</span> elevated ·{" "}
           <span className="text-red-400">≤0.7×</span> suppressed
         </span>
-        <span className="ml-auto text-gray-700 italic">auto-refreshes CMP/PE every 2h</span>
+        <span className="ml-auto text-gray-700 italic">CMP auto-refreshes hourly · Mon–Fri 9:15–16:00 IST</span>
       </div>
     </div>
   );
