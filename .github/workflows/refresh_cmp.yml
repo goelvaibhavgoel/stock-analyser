@@ -1,0 +1,31 @@
+name: Hourly CMP Refresh
+
+on:
+  schedule:
+    # Every hour 9:30 AM – 3:30 PM IST (= UTC 04:00 – 10:00), Mon–Fri
+    - cron: "0 4-10 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  cmp:
+    name: Refresh CMP (technical phase)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install deps
+        run: uv sync
+
+      - name: Technical phase
+        run: uv run python run.py --phase technical
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
