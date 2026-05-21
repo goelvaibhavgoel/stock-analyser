@@ -39,6 +39,8 @@ export type RowData = {
   quote: QuoteData | null;
   funds: Record<string, FundData>;
   fy26Complete: boolean;
+  fy27Guidance: number | null;
+  fy27Remarks:  string | null;
 };
 
 type SortField = "cmpDma50" | "volRatio" | null;
@@ -73,6 +75,14 @@ function volRatioColor(r: number | null) {
   if (r > 1.0)  return "text-yellow-600";
   if (r < 0.7)  return "text-red-500";
   return "text-gray-600";
+}
+
+function fy27GuideColor(v: number | null) {
+  if (v == null) return "text-gray-400";
+  if (v >= 0.50) return "text-emerald-600 font-bold";
+  if (v >= 0.30) return "text-emerald-600";
+  if (v >= 0.20) return "text-yellow-600";
+  return "text-gray-500";
 }
 
 function cmpDmaColor(v: number | null) {
@@ -504,6 +514,9 @@ export function WatchlistClient({
               <th className="px-3 text-right bg-gray-100">
                 NP Growth<br /><span className="text-gray-400 normal-case">YoY %</span>
               </th>
+              <th className="px-3 text-right bg-gray-100">
+                FY27 Guide<br /><span className="text-gray-400 normal-case">Rev %</span>
+              </th>
               <th className="px-3 text-right bg-gray-100">200 DMA</th>
               <th className="px-3 text-right bg-gray-100">50 DMA</th>
               <th
@@ -621,6 +634,12 @@ export function WatchlistClient({
                   </td>
                   <td className={`px-3 text-right ${np != null ? pctColor(npGrowth) : "text-gray-400"}`}>
                     {np != null ? (npGrowth != null ? pctFmt(npGrowth) : "—") : "—"}
+                  </td>
+                  <td className={`px-3 text-right ${fy27GuideColor(row.fy27Guidance)}`}
+                    title={row.fy27Remarks ?? undefined}>
+                    {row.fy27Guidance != null
+                      ? `+${(row.fy27Guidance * 100).toFixed(0)}%`
+                      : "—"}
                   </td>
                   <td className="px-3 text-right">
                     <span className={dma200Color}>

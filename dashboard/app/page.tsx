@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { WatchlistClient } from "@/components/WatchlistClient";
 import type { RowData } from "@/components/WatchlistClient";
+import { FY27_GUIDANCE } from "@/lib/fy27_guidance";
 
 export const dynamic = "force-dynamic";
 
@@ -66,12 +67,17 @@ async function getData(): Promise<{ rows: RowData[]; stocksWithEvents: Set<numbe
   );
 
   return {
-    rows: stocks.map((s) => ({
-      ...s,
-      quote:       quoteMap[s.id] ?? null,
-      funds:       fundMap[s.id] ?? {},
-      fy26Complete: q4ConfirmedSet.has(s.id),
-    })),
+    rows: stocks.map((s) => {
+      const g = FY27_GUIDANCE[s.nse_code] ?? null;
+      return {
+        ...s,
+        quote:          quoteMap[s.id] ?? null,
+        funds:          fundMap[s.id] ?? {},
+        fy26Complete:   q4ConfirmedSet.has(s.id),
+        fy27Guidance:   g?.guidance  ?? null,
+        fy27Remarks:    g?.remarks   ?? null,
+      };
+    }),
     stocksWithEvents,
   };
 }

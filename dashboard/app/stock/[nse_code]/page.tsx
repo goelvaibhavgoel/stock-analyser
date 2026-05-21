@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FY27_GUIDANCE } from "@/lib/fy27_guidance";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -470,6 +471,31 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
           </a>
         </div>
       </Section>
+
+      {/* FY27 Revenue Guidance */}
+      {(() => {
+        const g = FY27_GUIDANCE[stock.nse_code];
+        if (!g) return null;
+        const pct = (g.guidance * 100).toFixed(0);
+        const color =
+          g.guidance >= 0.50 ? "text-emerald-600" :
+          g.guidance >= 0.30 ? "text-emerald-600" :
+          g.guidance >= 0.20 ? "text-yellow-600"  : "text-gray-600";
+        return (
+          <Section title="FY27 Revenue Guidance">
+            <div className="bg-gray-50 border border-gray-200 rounded p-3 text-xs space-y-1.5">
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500 shrink-0 w-32">Growth guidance</span>
+                <span className={`text-base font-bold ${color}`}>+{pct}%</span>
+              </div>
+              <div className="flex gap-2">
+                <span className="text-gray-500 shrink-0 w-32">Remarks</span>
+                <span className="text-gray-800 leading-relaxed">{g.remarks}</span>
+              </div>
+            </div>
+          </Section>
+        );
+      })()}
 
       {/* Concall */}
       {concall?.json_analysis && (
