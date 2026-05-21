@@ -272,6 +272,7 @@ export function WatchlistClient({
   const [notes, setNotes]                     = useState<Record<string, string>>({});
   const [notesModal, setNotesModal]           = useState<{ nse_code: string; name: string } | null>(null);
   const [notesEditText, setNotesEditText]     = useState("");
+  const [noteTooltip, setNoteTooltip]         = useState<{ text: string; x: number; y: number } | null>(null);
 
   // Load persisted FY27 overrides and notes: localStorage first (instant), then Supabase sync
   useEffect(() => {
@@ -590,13 +591,17 @@ export function WatchlistClient({
                       {hasEvent && (
                         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="New event today" />
                       )}
-                      {/* Note hover icon */}
+                      {/* Note hover icon — tooltip rendered fixed to escape overflow clipping */}
                       {rowNote && (
-                        <span className="relative group cursor-default shrink-0">
+                        <span
+                          className="cursor-default shrink-0"
+                          onMouseEnter={(e) => {
+                            const r = e.currentTarget.getBoundingClientRect();
+                            setNoteTooltip({ text: rowNote, x: r.left, y: r.bottom + 6 });
+                          }}
+                          onMouseLeave={() => setNoteTooltip(null)}
+                        >
                           <NoteIcon className="w-3 h-3 text-blue-400" />
-                          <span className="pointer-events-none absolute left-0 top-5 z-50 hidden group-hover:block bg-white border border-gray-300 rounded shadow-lg p-2 text-xs text-gray-700 w-52 whitespace-pre-wrap leading-relaxed">
-                            {rowNote}
-                          </span>
                         </span>
                       )}
                     </div>
@@ -750,6 +755,16 @@ export function WatchlistClient({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Note hover tooltip (fixed — escapes overflow clipping) ── */}
+      {noteTooltip && (
+        <div
+          className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-xl p-3 text-xs text-gray-800 whitespace-pre-wrap leading-relaxed pointer-events-none"
+          style={{ left: noteTooltip.x, top: noteTooltip.y, maxWidth: 320, minWidth: 200 }}
+        >
+          {noteTooltip.text}
         </div>
       )}
 
