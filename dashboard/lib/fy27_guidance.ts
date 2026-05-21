@@ -23,7 +23,6 @@ export const FY27_GUIDANCE: Record<string, GuidanceEntry> = {
   UGROCAP:    { guidance: 0.225, remarks: "Continues to target AUM growth of 20–25%." },
 
   // ── IT / Fintech ───────────────────────────────────────────────────────────
-  VEEFIN:     { guidance: 0.275, remarks: "Expects maintaining standalone growth of 25–30% YoY over the next few years." },
   ROBU:       { guidance: 0.50,  remarks: "Confident in sustaining historic 50% CAGR growth with PAT range of 8–10% over the next 2–3 years." },
   INFOLLION:  { guidance: 0.45,  remarks: "Has maintained 40–50% growth historically; aims to continue this momentum." },
   PRIZOR:     { guidance: 0.325, remarks: "Expects sustained revenue growth of 30–35% with long-term potential of INR 1,000 Cr at full utilization." },

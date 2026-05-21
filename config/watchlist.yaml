@@ -12,7 +12,6 @@ stocks:
   - { nse_code: ETERNAL,     bse_code: "543320", name: Eternal Ltd (formerly Zomato),       sector: IT,      market_cap_bucket: LARGE, groww_slug: zomato-ltd }
   - { nse_code: COFORGE,     bse_code: "532541", name: Coforge Ltd,                         sector: IT,      market_cap_bucket: LARGE, groww_slug: coforge-ltd }
   - { nse_code: EBGNG,       bse_code: "544455", name: GNG Electronics Ltd,                 sector: IT,      market_cap_bucket: SMALL, groww_slug: gng-electronics-ltd }
-  - { nse_code: VEEFIN,      bse_code: "543931", name: Veefin Solutions Ltd,                sector: IT,      market_cap_bucket: SMALL }
   - { nse_code: ROBU,        bse_code: "543787", name: Macfos Ltd (Robu.in),                sector: IT,      market_cap_bucket: SMALL }
 
   # ── ENERGY ───────────────────────────────────────────────────────────
