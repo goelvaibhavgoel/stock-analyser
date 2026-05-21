@@ -12,14 +12,22 @@ export async function POST(req: NextRequest) {
     process.env.SUPABASE_SERVICE_KEY!
   );
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("stocks")
     .delete()
-    .eq("nse_code", nse_code);
+    .eq("nse_code", nse_code)
+    .select("nse_code");   // return deleted row so we can confirm it existed
 
   if (error) {
+    console.error("[delete-stock] Supabase error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true });
+  if (!data || data.length === 0) {
+    // Stock wasn't found — treat as success (already deleted or never existed)
+    console.warn("[delete-stock] nse_code not found:", nse_code);
+    return NextResponse.json({ ok: true, found: false });
+  }
+
+  return NextResponse.json({ ok: true, found: true });
 }

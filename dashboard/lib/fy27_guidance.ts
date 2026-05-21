@@ -35,7 +35,6 @@ export const FY27_GUIDANCE: Record<string, GuidanceEntry> = {
   SAHAJSOLAR: { guidance: 0.375, remarks: "Targeting 35–40%+ CAGR over the next 3 years with EBITDA margin of 12%+." },
   KPIGREEN:   { guidance: 0.55,  remarks: "Management mentioned 50–60% revenue CAGR by 2030." },
   SHERA:      { guidance: 0.35,  remarks: "Projects 30–40% revenue growth for FY27." },
-  BONDADA:    { guidance: 0.65,  remarks: "Management has guided for 60–70% revenue growth in FY27." },
 
   // ── Infra ──────────────────────────────────────────────────────────────────
   VMARCIND:   { guidance: 0.40,  remarks: "Aims to achieve 40%+ revenue growth with 11–12% EBITDA margins in FY27." },

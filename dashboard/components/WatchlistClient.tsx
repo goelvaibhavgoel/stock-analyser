@@ -398,11 +398,13 @@ export function WatchlistClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nse_code: deleteConfirm.nse_code }),
       });
-      if (!res.ok) throw new Error();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setDeletedIds((prev) => { const next = new Set(prev); next.add(deleteConfirm.id); return next; });
       setDeleteConfirm(null);
-    } catch {
-      alert("Delete failed. Please try again.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      alert(`Delete failed: ${msg}\n\nPlease try again.`);
     } finally {
       setDeleteLoading(false);
     }
