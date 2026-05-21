@@ -87,9 +87,7 @@ function fy27GuideColor(v: number | null) {
 
 function cmpDmaColor(v: number | null) {
   if (v == null) return "text-gray-400";
-  if (v > 5)    return "text-emerald-600";
   if (v > 0)    return "text-emerald-600";
-  if (v < -5)   return "text-red-500";
   return "text-red-500";
 }
 
@@ -129,54 +127,53 @@ function cmpVsDma50Val(q: QuoteData | null): number | null {
     : null;
 }
 
-// ── Small icons ───────────────────────────────────────────────────────────────
+// ── SVG icons ─────────────────────────────────────────────────────────────────
 function ExternalLinkIcon() {
   return (
-    <svg
-      className="inline w-2.5 h-2.5 shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-      />
+    <svg className="inline w-2.5 h-2.5 shrink-0 text-gray-400 hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
     </svg>
   );
 }
 
-function SortArrows({
-  field,
-  sortField,
-  sortDir,
-}: {
-  field: SortField;
-  sortField: SortField;
-  sortDir: SortDir;
-}) {
-  if (sortField !== field) {
-    return <span className="text-gray-400 leading-none">↕</span>;
-  }
+function NoteIcon({ className = "" }: { className?: string }) {
   return (
-    <span className="text-blue-600 leading-none">
-      {sortDir === "asc" ? "↑" : "↓"}
-    </span>
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
   );
 }
 
-// ── Market-hours guard (IST = UTC+5:30, Mon–Fri 9:15–16:00) ─────────────────
+function TrashIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" />
+    </svg>
+  );
+}
+
+function SortArrows({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: SortDir }) {
+  if (sortField !== field) return <span className="text-gray-400 leading-none">↕</span>;
+  return <span className="text-blue-600 leading-none">{sortDir === "asc" ? "↑" : "↓"}</span>;
+}
+
+// ── Market-hours guard (IST = UTC+5:30, Mon–Fri 9:15–16:00) ──────────────────
 function isMarketHours(): boolean {
   const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
-  const day = nowIST.getUTCDay(); // 0=Sun … 6=Sat
+  const day = nowIST.getUTCDay();
   if (day === 0 || day === 6) return false;
   const mins = nowIST.getUTCHours() * 60 + nowIST.getUTCMinutes();
   return mins >= 9 * 60 + 15 && mins < 16 * 60;
 }
 
-// ── Fetch latest quotes from Supabase ─────────────────────────────────────────
+// ── Fetch helpers ─────────────────────────────────────────────────────────────
 async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, QuoteData>> {
   const { data } = await supabase
     .from("daily_quotes")
@@ -184,7 +181,6 @@ async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, Quo
     .in("stock_id", stockIds)
     .order("date", { ascending: false })
     .limit(stockIds.length * 3);
-
   const map: Record<number, QuoteData> = {};
   for (const q of (data ?? []) as QuoteData[]) {
     if (!map[q.stock_id]) map[q.stock_id] = q;
@@ -192,17 +188,13 @@ async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, Quo
   return map;
 }
 
-// CMP-only fetch — does NOT touch PE or any other field
-async function fetchLatestCmp(
-  stockIds: number[]
-): Promise<Record<number, { cmp: number | null; pct_change: number | null }>> {
+async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp: number | null; pct_change: number | null }>> {
   const { data } = await supabase
     .from("daily_quotes")
     .select("stock_id,cmp,pct_change")
     .in("stock_id", stockIds)
     .order("date", { ascending: false })
     .limit(stockIds.length * 3);
-
   const map: Record<number, { cmp: number | null; pct_change: number | null }> = {};
   for (const q of (data ?? []) as any[]) {
     if (!map[q.stock_id]) map[q.stock_id] = { cmp: q.cmp, pct_change: q.pct_change };
@@ -210,42 +202,25 @@ async function fetchLatestCmp(
   return map;
 }
 
-// ── Button state ──────────────────────────────────────────────────────────────
+// ── Refresh button ────────────────────────────────────────────────────────────
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
-
-const QUICK_WAIT_S = 90;
-const ALL_WAIT_S   = 8 * 60;
-const AUTO_REFRESH_MS = 60 * 60 * 1000; // 1 hour (only fires during market hours)
+const QUICK_WAIT_S  = 90;
+const ALL_WAIT_S    = 8 * 60;
+const AUTO_REFRESH_MS = 60 * 60 * 1000;
 
 function Spinner() {
-  return (
-    <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-  );
+  return <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />;
 }
 
-function RefreshBtn({
-  state,
-  countdown,
-  onClick,
-  label,
-}: {
-  state: BtnState;
-  countdown: number;
-  onClick: () => void;
-  label: string;
-}) {
+function RefreshBtn({ state, countdown, onClick, label }: { state: BtnState; countdown: number; onClick: () => void; label: string }) {
   const busy = state !== "idle" && state !== "done" && state !== "error";
-  const baseClass =
-    "inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors select-none";
-
-  let colorClass =
-    "bg-white border border-gray-300 hover:border-gray-500 text-gray-700 cursor-pointer";
-  if (busy)             colorClass = "bg-gray-50 border border-gray-200 text-gray-400 cursor-not-allowed";
-  if (state === "done") colorClass = "bg-emerald-50 border border-emerald-400 text-emerald-700 cursor-not-allowed";
-  if (state === "error") colorClass = "bg-red-50 border border-red-400 text-red-600 cursor-not-allowed";
-
+  const base = "inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors select-none";
+  let col = "bg-white border border-gray-300 hover:border-gray-500 text-gray-700 cursor-pointer";
+  if (busy)              col = "bg-gray-50 border border-gray-200 text-gray-400 cursor-not-allowed";
+  if (state === "done")  col = "bg-emerald-50 border border-emerald-400 text-emerald-700 cursor-not-allowed";
+  if (state === "error") col = "bg-red-50 border border-red-400 text-red-600 cursor-not-allowed";
   return (
-    <button onClick={onClick} disabled={busy} className={`${baseClass} ${colorClass}`}>
+    <button onClick={onClick} disabled={busy} className={`${base} ${col}`}>
       {state === "idle"       && <>{label}</>}
       {state === "triggering" && <><Spinner /> Triggering…</>}
       {state === "waiting"    && <><Spinner /> {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}</>}
@@ -271,41 +246,59 @@ export function WatchlistClient({
 
   const [quoteMap, setQuoteMap] = useState<Record<number, QuoteData>>(() => {
     const m: Record<number, QuoteData> = {};
-    for (const r of initialRows) {
-      if (r.quote) m[r.id] = r.quote as QuoteData;
-    }
+    for (const r of initialRows) if (r.quote) m[r.id] = r.quote as QuoteData;
     return m;
   });
 
-  const [latestDate, setLatestDate]             = useState(initialDate);
-  const [refreshState, setRefreshState]         = useState<BtnState>("idle");
-  const [refreshAllState, setRefreshAllState]   = useState<BtnState>("idle");
-  const [countdown, setCountdown]               = useState(0);
-  const [countdownAll, setCountdownAll]         = useState(0);
-
-  // ── Controls state ────────────────────────────────────────────────────────
-  const [searchQuery, setSearchQuery]           = useState("");
+  const [latestDate, setLatestDate]           = useState(initialDate);
+  const [refreshState, setRefreshState]       = useState<BtnState>("idle");
+  const [refreshAllState, setRefreshAllState] = useState<BtnState>("idle");
+  const [countdown, setCountdown]             = useState(0);
+  const [countdownAll, setCountdownAll]       = useState(0);
+  const [searchQuery, setSearchQuery]         = useState("");
   const [filterGoldenCross, setFilterGoldenCross] = useState(false);
-  const [sortField, setSortField]               = useState<SortField>(null);
-  const [sortDir, setSortDir]                   = useState<SortDir>("desc");
+  const [sortField, setSortField]             = useState<SortField>(null);
+  const [sortDir, setSortDir]                 = useState<SortDir>("desc");
+
+  // ── New feature state ──────────────────────────────────────────────────────
+  const [deletedIds, setDeletedIds]           = useState<Set<number>>(new Set());
+  const [deleteConfirm, setDeleteConfirm]     = useState<{ id: number; nse_code: string; name: string } | null>(null);
+  const [deleteLoading, setDeleteLoading]     = useState(false);
+
+  const [fy27Overrides, setFy27Overrides]     = useState<Record<string, number | null>>({});
+  const [editingFy27, setEditingFy27]         = useState<string | null>(null);
+  const [fy27EditVal, setFy27EditVal]         = useState("");
+
+  const [notes, setNotes]                     = useState<Record<string, string>>({});
+  const [notesModal, setNotesModal]           = useState<{ nse_code: string; name: string } | null>(null);
+  const [notesEditText, setNotesEditText]     = useState("");
+
+  // Load persisted FY27 overrides and notes from localStorage
+  useEffect(() => {
+    const overrides: Record<string, number | null> = {};
+    const noteMap: Record<string, string> = {};
+    for (const row of initialRows) {
+      const ov = localStorage.getItem(`fy27_${row.nse_code}`);
+      if (ov !== null) overrides[row.nse_code] = ov === "" ? null : parseFloat(ov);
+      const note = localStorage.getItem(`note_${row.nse_code}`);
+      if (note) noteMap[row.nse_code] = note;
+    }
+    if (Object.keys(overrides).length) setFy27Overrides(overrides);
+    if (Object.keys(noteMap).length)   setNotes(noteMap);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerAllRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Full reload (used by Refresh / Refresh All buttons)
   const reloadQuotes = useCallback(async () => {
     const fresh = await fetchLatestQuotes(stockIds);
     setQuoteMap(fresh);
-    const dates = Object.values(fresh)
-      .map((q) => q.date)
-      .filter(Boolean)
-      .sort()
-      .reverse();
+    const dates = Object.values(fresh).map((q) => q.date).filter(Boolean).sort().reverse();
     if (dates[0]) setLatestDate(dates[0] as string);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockIds.join(",")]);
 
-  // CMP-only reload — runs hourly during market hours, never touches PE
   const reloadCmp = useCallback(async () => {
     const fresh = await fetchLatestCmp(stockIds);
     setQuoteMap((prev) => {
@@ -319,19 +312,14 @@ export function WatchlistClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stockIds.join(",")]);
 
-  // Auto-refresh CMP every hour, Mon–Fri 9:15 AM–4:00 PM IST only
   useEffect(() => {
-    const id = setInterval(() => {
-      if (isMarketHours()) reloadCmp();
-    }, AUTO_REFRESH_MS);
+    const id = setInterval(() => { if (isMarketHours()) reloadCmp(); }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [reloadCmp]);
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current)    clearInterval(timerRef.current);
-      if (timerAllRef.current) clearInterval(timerAllRef.current);
-    };
+  useEffect(() => () => {
+    if (timerRef.current)    clearInterval(timerRef.current);
+    if (timerAllRef.current) clearInterval(timerAllRef.current);
   }, []);
 
   const startCountdown = (
@@ -356,90 +344,103 @@ export function WatchlistClient({
   const handleRefresh = async () => {
     setRefreshState("triggering");
     try {
-      const res = await fetch("/api/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "quick" }),
-      });
+      const res = await fetch("/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "quick" }) });
       if (!res.ok) throw new Error();
       setRefreshState("waiting");
-      startCountdown(QUICK_WAIT_S, setCountdown, timerRef, async () => {
-        await reloadQuotes();
-        setRefreshState("done");
-        setTimeout(() => setRefreshState("idle"), 3000);
-      });
-    } catch {
-      setRefreshState("error");
-      setTimeout(() => setRefreshState("idle"), 3000);
-    }
+      startCountdown(QUICK_WAIT_S, setCountdown, timerRef, async () => { await reloadQuotes(); setRefreshState("done"); setTimeout(() => setRefreshState("idle"), 3000); });
+    } catch { setRefreshState("error"); setTimeout(() => setRefreshState("idle"), 3000); }
   };
 
   const handleRefreshAll = async () => {
     setRefreshAllState("triggering");
     try {
-      const res = await fetch("/api/refresh", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "all" }),
-      });
+      const res = await fetch("/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "all" }) });
       if (!res.ok) throw new Error();
       setRefreshAllState("waiting");
-      startCountdown(ALL_WAIT_S, setCountdownAll, timerAllRef, () => {
-        router.refresh();
-        setRefreshAllState("done");
-        setTimeout(() => setRefreshAllState("idle"), 3000);
-      });
-    } catch {
-      setRefreshAllState("error");
-      setTimeout(() => setRefreshAllState("idle"), 3000);
-    }
+      startCountdown(ALL_WAIT_S, setCountdownAll, timerAllRef, () => { router.refresh(); setRefreshAllState("done"); setTimeout(() => setRefreshAllState("idle"), 3000); });
+    } catch { setRefreshAllState("error"); setTimeout(() => setRefreshAllState("idle"), 3000); }
   };
 
   const toggleSort = (field: "cmpDma50" | "volRatio") => {
-    if (sortField !== field) {
-      setSortField(field);
-      setSortDir("desc");
-    } else if (sortDir === "desc") {
-      setSortDir("asc");
-    } else {
-      setSortField(null);
+    if (sortField !== field) { setSortField(field); setSortDir("desc"); }
+    else if (sortDir === "desc") setSortDir("asc");
+    else setSortField(null);
+  };
+
+  // ── Delete handlers ────────────────────────────────────────────────────────
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm) return;
+    setDeleteLoading(true);
+    try {
+      const res = await fetch("/api/delete-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nse_code: deleteConfirm.nse_code }),
+      });
+      if (!res.ok) throw new Error();
+      setDeletedIds((prev) => { const next = new Set(prev); next.add(deleteConfirm.id); return next; });
+      setDeleteConfirm(null);
+    } catch {
+      alert("Delete failed. Please try again.");
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  // ── FY27 edit handlers ─────────────────────────────────────────────────────
+  const saveFy27 = (nse_code: string) => {
+    const raw = fy27EditVal.trim().replace(/%/g, "");
+    const val = raw === "" ? null : parseFloat(raw) / 100;
+    setFy27Overrides((prev) => ({ ...prev, [nse_code]: val }));
+    if (val === null) localStorage.removeItem(`fy27_${nse_code}`);
+    else localStorage.setItem(`fy27_${nse_code}`, String(val));
+    setEditingFy27(null);
+  };
+
+  const openFy27Edit = (nse_code: string, effective: number | null) => {
+    setEditingFy27(nse_code);
+    setFy27EditVal(effective != null ? String((effective * 100).toFixed(0)) : "");
+  };
+
+  // ── Notes handlers ─────────────────────────────────────────────────────────
+  const openNotes = (row: RowData) => {
+    setNotesModal({ nse_code: row.nse_code, name: row.name });
+    setNotesEditText(notes[row.nse_code] ?? "");
+  };
+
+  const saveNotes = () => {
+    if (!notesModal) return;
+    const text = notesEditText.trim();
+    setNotes((prev) => ({ ...prev, [notesModal.nse_code]: text }));
+    if (text === "") localStorage.removeItem(`note_${notesModal.nse_code}`);
+    else localStorage.setItem(`note_${notesModal.nse_code}`, text);
+    setNotesModal(null);
   };
 
   // ── Filtered + sorted rows ────────────────────────────────────────────────
   const displayRows = useMemo(() => {
-    let rows = initialRows;
+    let rows = initialRows.filter((r) => !deletedIds.has(r.id));
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      rows = rows.filter(
-        (r) =>
-          r.nse_code.toLowerCase().includes(q) ||
-          r.name.toLowerCase().includes(q)
-      );
+      rows = rows.filter((r) => r.nse_code.toLowerCase().includes(q) || r.name.toLowerCase().includes(q));
     }
 
     if (filterGoldenCross) {
       rows = rows.filter((r) => {
         const q = quoteMap[r.id];
-        return (
-          q?.dma_50 != null &&
-          q?.dma_200 != null &&
-          Number(q.dma_50) > Number(q.dma_200)
-        );
+        return q?.dma_50 != null && q?.dma_200 != null && Number(q.dma_50) > Number(q.dma_200);
       });
     }
 
     if (sortField) {
       rows = [...rows].sort((a, b) => {
-        let av: number | null = null;
-        let bv: number | null = null;
+        let av: number | null = null, bv: number | null = null;
         if (sortField === "cmpDma50") {
           av = cmpVsDma50Val(quoteMap[a.id] ?? null);
           bv = cmpVsDma50Val(quoteMap[b.id] ?? null);
         } else {
-          const qa = quoteMap[a.id];
-          const qb = quoteMap[b.id];
+          const qa = quoteMap[a.id], qb = quoteMap[b.id];
           av = qa ? volRatio(qa.volume_7d, qa.avg_volume_30d) : null;
           bv = qb ? volRatio(qb.volume_7d, qb.avg_volume_30d) : null;
         }
@@ -451,21 +452,23 @@ export function WatchlistClient({
     }
 
     return rows;
-  }, [initialRows, searchQuery, filterGoldenCross, sortField, sortDir, quoteMap]);
+  }, [initialRows, deletedIds, searchQuery, filterGoldenCross, sortField, sortDir, quoteMap]);
+
+  const activeCount = initialRows.length - deletedIds.size;
 
   return (
     <div>
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
         <h1 className="text-xl font-semibold">Watchlist</h1>
         <RefreshBtn state={refreshState} countdown={countdown} onClick={handleRefresh} label="↻ Refresh" />
         <RefreshBtn state={refreshAllState} countdown={countdownAll} onClick={handleRefreshAll} label="↻ Refresh All" />
         <span className="ml-auto text-xs text-gray-400">
-          {initialRows.length} stocks · as of {latestDate}
+          {activeCount} stocks · as of {latestDate}
         </span>
       </div>
 
-      {/* Controls bar */}
+      {/* ── Controls bar ── */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
         <input
           type="text"
@@ -477,22 +480,18 @@ export function WatchlistClient({
         <button
           onClick={() => setFilterGoldenCross((v) => !v)}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
-            filterGoldenCross
-              ? "bg-emerald-50 border-emerald-400 text-emerald-700"
-              : "bg-white border-gray-300 text-gray-500 hover:border-gray-400"
+            filterGoldenCross ? "bg-emerald-50 border-emerald-400 text-emerald-700" : "bg-white border-gray-300 text-gray-500 hover:border-gray-400"
           }`}
         >
           <span className={filterGoldenCross ? "text-emerald-600" : "text-gray-400"}>▲</span>
           50 DMA &gt; 200 DMA
         </button>
         {(searchQuery || filterGoldenCross || sortField) && (
-          <span className="text-xs text-gray-500">
-            {displayRows.length} of {initialRows.length} shown
-          </span>
+          <span className="text-xs text-gray-500">{displayRows.length} of {activeCount} shown</span>
         )}
       </div>
 
-      {/* Table */}
+      {/* ── Table ── */}
       <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-12rem)] rounded-lg border border-gray-200">
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 z-10">
@@ -502,56 +501,39 @@ export function WatchlistClient({
               <th className="px-3 text-right bg-gray-100">CMP</th>
               <th className="px-3 text-right bg-gray-100">PE</th>
               <th className="px-3 text-right bg-gray-100">Ind PE</th>
-              <th className="px-3 text-right bg-gray-100">
-                Revenue<br /><span className="text-gray-400 normal-case">FY26 Cr</span>
-              </th>
-              <th className="px-3 text-right bg-gray-100">
-                Rev Growth<br /><span className="text-gray-400 normal-case">YoY %</span>
-              </th>
-              <th className="px-3 text-right bg-gray-100">
-                Net Profit<br /><span className="text-gray-400 normal-case">FY26 Cr</span>
-              </th>
-              <th className="px-3 text-right bg-gray-100">
-                NP Growth<br /><span className="text-gray-400 normal-case">YoY %</span>
-              </th>
-              <th className="px-3 text-right bg-gray-100">
-                FY27 Guide<br /><span className="text-gray-400 normal-case">Rev %</span>
+              <th className="px-3 text-right bg-gray-100">Revenue<br /><span className="text-gray-400 normal-case">FY26 Cr</span></th>
+              <th className="px-3 text-right bg-gray-100">Rev Growth<br /><span className="text-gray-400 normal-case">YoY %</span></th>
+              <th className="px-3 text-right bg-gray-100">Net Profit<br /><span className="text-gray-400 normal-case">FY26 Cr</span></th>
+              <th className="px-3 text-right bg-gray-100">NP Growth<br /><span className="text-gray-400 normal-case">YoY %</span></th>
+              <th className="px-3 text-right bg-gray-100 select-none" title="Double-click any cell to edit">
+                FY27 Guide<br /><span className="text-gray-400 normal-case font-normal">Rev % ✎</span>
               </th>
               <th className="px-3 text-right bg-gray-100">200 DMA</th>
               <th className="px-3 text-right bg-gray-100">50 DMA</th>
-              <th
-                className="px-3 text-right bg-gray-100 cursor-pointer hover:text-gray-700 select-none"
-                onClick={() => toggleSort("cmpDma50")}
-              >
-                <div className="flex items-center justify-end gap-1">
-                  CMP/DMA-50
-                  <SortArrows field="cmpDma50" sortField={sortField} sortDir={sortDir} />
-                </div>
+              <th className="px-3 text-right bg-gray-100 cursor-pointer hover:text-gray-700 select-none" onClick={() => toggleSort("cmpDma50")}>
+                <div className="flex items-center justify-end gap-1">CMP/DMA-50 <SortArrows field="cmpDma50" sortField={sortField} sortDir={sortDir} /></div>
                 <span className="text-gray-400 normal-case font-normal">% diff</span>
               </th>
-              <th
-                className="px-4 text-right bg-gray-100 cursor-pointer hover:text-gray-700 select-none"
-                onClick={() => toggleSort("volRatio")}
-              >
-                <div className="flex items-center justify-end gap-1">
-                  Vol Ratio
-                  <SortArrows field="volRatio" sortField={sortField} sortDir={sortDir} />
-                </div>
+              <th className="px-3 text-right bg-gray-100 cursor-pointer hover:text-gray-700 select-none" onClick={() => toggleSort("volRatio")}>
+                <div className="flex items-center justify-end gap-1">Vol Ratio <SortArrows field="volRatio" sortField={sortField} sortDir={sortDir} /></div>
                 <span className="text-gray-400 normal-case font-normal">7d/30d</span>
               </th>
+              <th className="px-3 text-center bg-gray-100 w-20">Actions</th>
             </tr>
           </thead>
           <tbody>
             {displayRows.map((row) => {
-              const q         = quoteMap[row.id] ?? null;
-              const fy26      = row.fy26Complete ? row.funds["FY26"] : null;
-              const fy25      = row.funds["FY25"];
-              const rev       = fy26?.revenue    ?? null;
-              const np        = fy26?.net_profit ?? null;
-              const revGrowth = yoy(rev, fy25?.revenue    ?? null);
-              const npGrowth  = yoy(np,  fy25?.net_profit ?? null);
-              const vRatio    = q ? volRatio(q.volume_7d, q.avg_volume_30d) : null;
-              const cmpDma50  = cmpVsDma50Val(q);
+              const q          = quoteMap[row.id] ?? null;
+              const fy26       = row.fy26Complete ? row.funds["FY26"] : null;
+              const fy25       = row.funds["FY25"];
+              const rev        = fy26?.revenue    ?? null;
+              const np         = fy26?.net_profit ?? null;
+              const revGrowth  = yoy(rev, fy25?.revenue    ?? null);
+              const npGrowth   = yoy(np,  fy25?.net_profit ?? null);
+              const vRatio     = q ? volRatio(q.volume_7d, q.avg_volume_30d) : null;
+              const cmpDma50   = cmpVsDma50Val(q);
+              const hasEvent   = stocksWithEvents.has(row.id);
+              const rowNote    = notes[row.nse_code];
 
               const dma200Color = q?.cmp && q?.dma_200
                 ? Number(q.cmp) > Number(q.dma_200) ? "text-emerald-600" : "text-red-500"
@@ -560,107 +542,141 @@ export function WatchlistClient({
                 ? Number(q.cmp) > Number(q.dma_50) ? "text-emerald-600" : "text-red-500"
                 : "text-gray-400";
 
-              const hasEvent = stocksWithEvents.has(row.id);
+              const effectiveFy27 = fy27Overrides[row.nse_code] !== undefined
+                ? fy27Overrides[row.nse_code]
+                : row.fy27Guidance;
 
               return (
-                <tr
-                  key={row.id}
-                  className="border-b border-gray-200 hover:bg-blue-50 transition-colors"
-                >
+                <tr key={row.id} className="border-b border-gray-200 hover:bg-blue-50 transition-colors">
+                  {/* Stock name */}
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1.5">
-                      <Link
-                        href={`/stock/${row.nse_code}`}
-                        className="text-blue-600 hover:text-blue-800 font-semibold text-sm"
-                      >
+                      <Link href={`/stock/${row.nse_code}`} className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
                         {row.nse_code}
                       </Link>
-                      <a
-                        href={`https://www.screener.in/company/${row.nse_code}/`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open on Screener.in"
-                        className="flex items-center"
-                      >
+                      <a href={`https://www.screener.in/company/${row.nse_code}/`} target="_blank" rel="noopener noreferrer" title="Open on Screener.in" className="flex items-center">
                         <ExternalLinkIcon />
                       </a>
                       {hasEvent && (
-                        <span
-                          className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0"
-                          title="New event today"
-                        />
+                        <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="New event today" />
+                      )}
+                      {/* Note hover icon */}
+                      {rowNote && (
+                        <span className="relative group cursor-default shrink-0">
+                          <NoteIcon className="w-3 h-3 text-blue-400" />
+                          <span className="pointer-events-none absolute left-0 top-5 z-50 hidden group-hover:block bg-white border border-gray-300 rounded shadow-lg p-2 text-xs text-gray-700 w-52 whitespace-pre-wrap leading-relaxed">
+                            {rowNote}
+                          </span>
+                        </span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 mt-0.5 max-w-[160px] truncate">
-                      {row.name}
-                    </div>
+                    <div className="text-xs text-gray-500 mt-0.5 max-w-[160px] truncate">{row.name}</div>
                   </td>
+
+                  {/* Sector */}
                   <td className="px-3">
                     <div className="text-gray-700 text-xs">{row.sector}</div>
                     {row.market_cap_bucket && (
-                      <span
-                        className={`text-[10px] px-1.5 py-0.5 rounded mt-0.5 inline-block ${CAP_STYLE[row.market_cap_bucket] ?? ""}`}
-                      >
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded mt-0.5 inline-block ${CAP_STYLE[row.market_cap_bucket] ?? ""}`}>
                         {row.market_cap_bucket}
                       </span>
                     )}
                   </td>
+
+                  {/* CMP */}
                   <td className="px-3 text-right">
-                    <div className="text-gray-900 font-medium">
-                      {q?.cmp != null ? fmt(Number(q.cmp), 1) : "—"}
-                    </div>
+                    <div className="text-gray-900 font-medium">{q?.cmp != null ? fmt(Number(q.cmp), 1) : "—"}</div>
                     <div className={`text-xs ${cmpPctColor(q?.pct_change != null ? Number(q.pct_change) : null)}`}>
                       {q?.pct_change != null ? pctFmt(Number(q.pct_change)) : ""}
                     </div>
                   </td>
-                  <td className="px-3 text-right text-gray-700">
-                    {q?.pe != null ? Number(q.pe).toFixed(1) : "—"}
-                  </td>
-                  <td className="px-3 text-right text-gray-500">
-                    {q?.sector_pe != null ? Number(q.sector_pe).toFixed(1) : "—"}
-                  </td>
+
+                  {/* PE / Ind PE */}
+                  <td className="px-3 text-right text-gray-700">{q?.pe != null ? Number(q.pe).toFixed(1) : "—"}</td>
+                  <td className="px-3 text-right text-gray-500">{q?.sector_pe != null ? Number(q.sector_pe).toFixed(1) : "—"}</td>
+
+                  {/* Revenue */}
                   <td className="px-3 text-right">
-                    {rev != null
-                      ? <span className="text-gray-700">{fmt(Number(rev))}</span>
-                      : <span className="text-yellow-600 text-xs italic">Awaited</span>}
+                    {rev != null ? <span className="text-gray-700">{fmt(Number(rev))}</span> : <span className="text-yellow-600 text-xs italic">Awaited</span>}
                   </td>
                   <td className={`px-3 text-right ${rev != null ? pctColor(revGrowth) : "text-gray-400"}`}>
                     {rev != null ? (revGrowth != null ? pctFmt(revGrowth) : "—") : "—"}
                   </td>
+
+                  {/* Net Profit */}
                   <td className="px-3 text-right">
-                    {np != null
-                      ? <span className="text-gray-700">{fmt(Number(np))}</span>
-                      : <span className="text-yellow-600 text-xs italic">Awaited</span>}
+                    {np != null ? <span className="text-gray-700">{fmt(Number(np))}</span> : <span className="text-yellow-600 text-xs italic">Awaited</span>}
                   </td>
                   <td className={`px-3 text-right ${np != null ? pctColor(npGrowth) : "text-gray-400"}`}>
                     {np != null ? (npGrowth != null ? pctFmt(npGrowth) : "—") : "—"}
                   </td>
-                  <td className={`px-3 text-right ${fy27GuideColor(row.fy27Guidance)}`}
-                    title={row.fy27Remarks ?? undefined}>
-                    {row.fy27Guidance != null
-                      ? `+${(row.fy27Guidance * 100).toFixed(0)}%`
-                      : "—"}
+
+                  {/* FY27 Guidance — double-click to edit */}
+                  <td
+                    className="px-3 text-right cursor-pointer select-none"
+                    title={editingFy27 !== row.nse_code ? (row.fy27Remarks ?? "Double-click to edit") : undefined}
+                    onDoubleClick={() => openFy27Edit(row.nse_code, effectiveFy27)}
+                  >
+                    {editingFy27 === row.nse_code ? (
+                      <input
+                        autoFocus
+                        className="w-14 text-right text-xs border border-blue-400 rounded px-1 py-0.5 bg-white text-gray-900 focus:outline-none"
+                        value={fy27EditVal}
+                        placeholder="%"
+                        onChange={(e) => setFy27EditVal(e.target.value)}
+                        onBlur={() => saveFy27(row.nse_code)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") saveFy27(row.nse_code);
+                          if (e.key === "Escape") setEditingFy27(null);
+                        }}
+                      />
+                    ) : (
+                      <span className={fy27GuideColor(effectiveFy27)}>
+                        {effectiveFy27 != null ? `+${(effectiveFy27 * 100).toFixed(0)}%` : "—"}
+                      </span>
+                    )}
+                  </td>
+
+                  {/* 200 DMA / 50 DMA */}
+                  <td className="px-3 text-right">
+                    <span className={dma200Color}>{q?.dma_200 != null ? fmt(Number(q.dma_200)) : "—"}</span>
                   </td>
                   <td className="px-3 text-right">
-                    <span className={dma200Color}>
-                      {q?.dma_200 != null ? fmt(Number(q.dma_200)) : "—"}
-                    </span>
-                  </td>
-                  <td className="px-3 text-right">
-                    <span className={dma50Color}>
-                      {q?.dma_50 != null ? fmt(Number(q.dma_50)) : "—"}
-                    </span>
-                    {q?.dma_50 != null &&
-                      q?.dma_200 != null &&
+                    <span className={dma50Color}>{q?.dma_50 != null ? fmt(Number(q.dma_50)) : "—"}</span>
+                    {q?.dma_50 != null && q?.dma_200 != null &&
                       Math.abs(Number(q.dma_50) - Number(q.dma_200)) / Number(q.dma_200) <= 0.02 && (
                         <span className="ml-1 text-yellow-500" title="DMA-50 within 2% of DMA-200">★</span>
-                      )}
+                    )}
                   </td>
+
+                  {/* CMP/DMA-50 % diff */}
                   <td className={`px-3 text-right font-medium ${cmpDmaColor(cmpDma50)}`}>
                     {cmpDma50 != null ? pctFmt(cmpDma50) : "—"}
                   </td>
-                  <td className={`px-4 text-right font-medium ${volRatioColor(vRatio)}`}>
+
+                  {/* Vol Ratio */}
+                  <td className={`px-3 text-right font-medium ${volRatioColor(vRatio)}`}>
                     {vRatio != null ? vRatio.toFixed(2) + "×" : "—"}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => openNotes(row)}
+                        title="Add / edit notes"
+                        className={`p-1 rounded transition-colors ${rowNote ? "text-blue-500 hover:text-blue-700" : "text-gray-300 hover:text-blue-500"}`}
+                      >
+                        <NoteIcon className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm({ id: row.id, nse_code: row.nse_code, name: row.name })}
+                        title="Remove from watchlist"
+                        className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors"
+                      >
+                        <TrashIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -669,32 +685,88 @@ export function WatchlistClient({
         </table>
       </div>
 
-      {/* Legend */}
+      {/* ── Legend ── */}
       <div className="mt-3 flex gap-6 text-xs text-gray-500 flex-wrap">
-        <span>
-          DMA-200/50:{" "}
-          <span className="text-emerald-600">green</span>=CMP above ·{" "}
-          <span className="text-red-500">red</span>=CMP below ·{" "}
-          <span className="text-yellow-500">★</span>=DMA-50 within 2% of DMA-200
-        </span>
-        <span>
-          Rev/NP growth:{" "}
-          <span className="text-emerald-600">≥20%</span> ·{" "}
-          <span className="text-orange-500">0-10%</span> ·{" "}
-          <span className="text-red-500">negative</span>
-        </span>
-        <span>
-          CMP/DMA-50:{" "}
-          <span className="text-emerald-600">+ve</span>=above ·{" "}
-          <span className="text-red-500">-ve</span>=below
-        </span>
-        <span>
-          Vol ratio:{" "}
-          <span className="text-emerald-600">≥1.5×</span> elevated ·{" "}
-          <span className="text-red-500">≤0.7×</span> suppressed
-        </span>
+        <span>DMA-200/50: <span className="text-emerald-600">green</span>=CMP above · <span className="text-red-500">red</span>=CMP below · <span className="text-yellow-500">★</span>=DMA-50 within 2% of DMA-200</span>
+        <span>Rev/NP growth: <span className="text-emerald-600">≥20%</span> · <span className="text-orange-500">0-10%</span> · <span className="text-red-500">negative</span></span>
+        <span>CMP/DMA-50: <span className="text-emerald-600">+ve</span>=above · <span className="text-red-500">-ve</span>=below</span>
+        <span>Vol ratio: <span className="text-emerald-600">≥1.5×</span> elevated · <span className="text-red-500">≤0.7×</span> suppressed</span>
         <span className="ml-auto text-gray-400 italic">CMP auto-refreshes hourly · Mon–Fri 9:15–16:00 IST</span>
       </div>
+
+      {/* ── Delete confirmation modal ── */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => !deleteLoading && setDeleteConfirm(null)}>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-xl p-5 w-80" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-2">Remove from watchlist?</h3>
+            <p className="text-xs text-gray-600 mb-1">
+              <strong className="text-gray-900">{deleteConfirm.nse_code}</strong> — {deleteConfirm.name}
+            </p>
+            <p className="text-xs text-red-500 mb-4">This will delete all data for this stock from Supabase.</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleteLoading}
+                className="px-3 py-1.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleteLoading}
+                className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {deleteLoading ? <><Spinner /> Deleting…</> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Notes modal ── */}
+      {notesModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setNotesModal(null)}>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Notes</h3>
+            <p className="text-xs text-gray-500 mb-3">{notesModal.nse_code} · {notesModal.name}</p>
+            <textarea
+              autoFocus
+              className="w-full h-32 text-xs border border-gray-300 rounded p-2 resize-none focus:outline-none focus:border-blue-400 text-gray-800 placeholder-gray-400"
+              placeholder="Add your notes about this stock…"
+              value={notesEditText}
+              onChange={(e) => setNotesEditText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) saveNotes(); }}
+            />
+            <p className="text-[10px] text-gray-400 mt-1 mb-3">Tip: ⌘+Enter to save · Stored locally in browser</p>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setNotesModal(null)}
+                className="px-3 py-1.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              {notes[notesModal.nse_code] && (
+                <button
+                  onClick={() => {
+                    setNotes((prev) => { const n = { ...prev }; delete n[notesModal.nse_code]; return n; });
+                    localStorage.removeItem(`note_${notesModal.nse_code}`);
+                    setNotesModal(null);
+                  }}
+                  className="px-3 py-1.5 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  Clear
+                </button>
+              )}
+              <button
+                onClick={saveNotes}
+                className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
