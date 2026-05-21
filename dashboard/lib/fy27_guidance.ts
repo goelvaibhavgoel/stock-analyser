@@ -49,7 +49,6 @@ export const FY27_GUIDANCE: Record<string, GuidanceEntry> = {
   JAINREC:    { guidance: 0.45,  remarks: "Reiterated 40–50% YoY growth guidance; indicated FY27 will be very promising." },
 
   // ── Healthcare ─────────────────────────────────────────────────────────────
-  FABCLEAN:   { guidance: 0.35,  remarks: "Expects 30–40% YoY revenue growth over the next 2 years." },
 
   // ── Chemicals ──────────────────────────────────────────────────────────────
   ACUTAAS:    { guidance: 0.25,  remarks: "Company guided for 25% revenue growth in FY27." },
