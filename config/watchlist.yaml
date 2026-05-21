@@ -27,6 +27,7 @@ stocks:
   - { nse_code: SOLEX,       bse_code: "532566", name: Solex Energy Ltd,                    sector: Energy,  market_cap_bucket: SMALL, groww_slug: solex-energy-ltd }
   - { nse_code: SCHNEIDER,   bse_code: "534139", name: Schneider Electric Infrastructure Ltd, sector: Energy, market_cap_bucket: LARGE, groww_slug: schneider-electric-infrastructure-ltd }
   - { nse_code: ATLANTAELE,                      name: Atlanta Electricals Ltd,              sector: Energy,  market_cap_bucket: MID }
+  - { nse_code: __DELETETEST__,                   name: Delete Test Stock,                    sector: Test,    market_cap_bucket: SMALL }
   - { nse_code: KPIGREEN,                        name: KPI Green Energy Ltd,                 sector: Energy,  market_cap_bucket: MID }
 
   # ── INFRA ────────────────────────────────────────────────────────────
