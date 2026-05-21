@@ -273,8 +273,9 @@ export function WatchlistClient({
   const [notesModal, setNotesModal]           = useState<{ nse_code: string; name: string } | null>(null);
   const [notesEditText, setNotesEditText]     = useState("");
 
-  // Load persisted FY27 overrides and notes from localStorage
+  // Load persisted FY27 overrides and notes: localStorage first (instant), then Supabase sync
   useEffect(() => {
+    // 1. Hydrate from localStorage immediately
     const overrides: Record<string, number | null> = {};
     const noteMap: Record<string, string> = {};
     for (const row of initialRows) {
@@ -285,6 +286,23 @@ export function WatchlistClient({
     }
     if (Object.keys(overrides).length) setFy27Overrides(overrides);
     if (Object.keys(noteMap).length)   setNotes(noteMap);
+
+    // 2. Sync from Supabase in background (server is source of truth)
+    fetch("/api/notes")
+      .then((r) => r.ok ? r.json() : null)
+      .then((serverNotes: Record<string, string> | null) => {
+        if (!serverNotes) return;
+        // Merge: server wins; also refresh localStorage cache
+        setNotes((prev) => {
+          const merged = { ...prev, ...serverNotes };
+          for (const [code, note] of Object.entries(serverNotes)) {
+            if (note) localStorage.setItem(`note_${code}`, note);
+            else localStorage.removeItem(`note_${code}`);
+          }
+          return merged;
+        });
+      })
+      .catch(() => {/* table may not exist yet — silent fail */});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -411,10 +429,20 @@ export function WatchlistClient({
   const saveNotes = () => {
     if (!notesModal) return;
     const text = notesEditText.trim();
-    setNotes((prev) => ({ ...prev, [notesModal.nse_code]: text }));
-    if (text === "") localStorage.removeItem(`note_${notesModal.nse_code}`);
-    else localStorage.setItem(`note_${notesModal.nse_code}`, text);
+    const code = notesModal.nse_code;
+
+    // Update state + localStorage immediately
+    setNotes((prev) => ({ ...prev, [code]: text }));
+    if (text === "") localStorage.removeItem(`note_${code}`);
+    else localStorage.setItem(`note_${code}`, text);
     setNotesModal(null);
+
+    // Persist to Supabase in background
+    fetch("/api/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nse_code: code, note: text }),
+    }).catch(() => {/* silent — localStorage still has it */});
   };
 
   // ── Filtered + sorted rows ────────────────────────────────────────────────
@@ -748,9 +776,15 @@ export function WatchlistClient({
               {notes[notesModal.nse_code] && (
                 <button
                   onClick={() => {
-                    setNotes((prev) => { const n = { ...prev }; delete n[notesModal.nse_code]; return n; });
-                    localStorage.removeItem(`note_${notesModal.nse_code}`);
+                    const code = notesModal.nse_code;
+                    setNotes((prev) => { const n = { ...prev }; delete n[code]; return n; });
+                    localStorage.removeItem(`note_${code}`);
                     setNotesModal(null);
+                    fetch("/api/notes", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ nse_code: code, note: "" }),
+                    }).catch(() => {});
                   }}
                   className="px-3 py-1.5 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50"
                 >
