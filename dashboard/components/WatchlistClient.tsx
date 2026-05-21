@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { screenerCode } from "@/lib/screener_codes";
 
 // ── Supabase browser client ───────────────────────────────────────────────────
 const supabase = createClient(
@@ -588,7 +589,7 @@ export function WatchlistClient({
                       <Link href={`/stock/${row.nse_code}`} className="text-blue-600 hover:text-blue-800 font-semibold text-sm">
                         {row.nse_code}
                       </Link>
-                      <a href={`https://www.screener.in/company/${row.nse_code}/`} target="_blank" rel="noopener noreferrer" title="Open on Screener.in" className="flex items-center">
+                      <a href={`https://www.screener.in/company/${screenerCode(row.nse_code)}/consolidated/`} target="_blank" rel="noopener noreferrer" title="Open on Screener.in" className="flex items-center">
                         <ExternalLinkIcon />
                       </a>
                       {hasEvent && (

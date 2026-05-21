@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FY27_GUIDANCE } from "@/lib/fy27_guidance";
+import { screenerCode } from "@/lib/screener_codes";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -448,7 +449,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
       <Section title="Charts">
         <div className="flex gap-3">
           <a
-            href={`https://www.screener.in/company/${stock.nse_code}/consolidated/`}
+            href={`https://www.screener.in/company/${screenerCode(stock.nse_code)}/consolidated/`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-blue-400 rounded text-xs text-gray-600 hover:text-blue-600 transition-colors"
