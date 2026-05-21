@@ -8,6 +8,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write
+
 jobs:
   remove:
     runs-on: ubuntu-latest
@@ -60,4 +63,5 @@ jobs:
           git add config/watchlist.yaml dashboard/lib/fy27_guidance.ts
           git diff --staged --quiet && echo "Nothing changed, skipping commit" && exit 0
           git commit -m "Remove ${{ github.event.inputs.nse_code }} from watchlist"
+          git pull --rebase origin main
           git push
