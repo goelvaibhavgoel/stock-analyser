@@ -1,0 +1,63 @@
+name: Remove stock from watchlist
+
+on:
+  workflow_dispatch:
+    inputs:
+      nse_code:
+        description: "NSE code to remove from watchlist.yaml and fy27_guidance.ts"
+        required: true
+        type: string
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove stock from config files
+        run: |
+          python3 - <<'PYEOF'
+          import re, sys
+
+          nse_code = "${{ github.event.inputs.nse_code }}"
+          changed = False
+
+          # watchlist.yaml — each stock is a single YAML flow-style line
+          with open("config/watchlist.yaml") as f:
+              lines = f.readlines()
+          filtered = [
+              l for l in lines
+              if not re.search(r'nse_code:\s*' + re.escape(nse_code) + r'[\s,}]', l)
+          ]
+          if filtered != lines:
+              with open("config/watchlist.yaml", "w") as f:
+                  f.writelines(filtered)
+              print(f"Removed {nse_code} from watchlist.yaml")
+              changed = True
+
+          # fy27_guidance.ts — e.g.   SYMBOL: { guidance: ...
+          with open("dashboard/lib/fy27_guidance.ts") as f:
+              lines = f.readlines()
+          filtered = [
+              l for l in lines
+              if not re.match(r'^\s+' + re.escape(nse_code) + r':\s*\{', l)
+          ]
+          if filtered != lines:
+              with open("dashboard/lib/fy27_guidance.ts", "w") as f:
+                  f.writelines(filtered)
+              print(f"Removed {nse_code} from fy27_guidance.ts")
+              changed = True
+
+          if not changed:
+              print(f"{nse_code} not found in either file — nothing to do")
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add config/watchlist.yaml dashboard/lib/fy27_guidance.ts
+          git diff --staged --quiet && echo "Nothing changed, skipping commit" && exit 0
+          git commit -m "Remove ${{ github.event.inputs.nse_code }} from watchlist"
+          git push
