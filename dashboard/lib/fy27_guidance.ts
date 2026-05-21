@@ -63,7 +63,6 @@ export const FY27_GUIDANCE: Record<string, GuidanceEntry> = {
 
   // ── Auto ───────────────────────────────────────────────────────────────────
   SMLMAH:     { guidance: 0.39,  remarks: "Targeting revenue of INR 15,000 Cr by FY31 (39% CAGR from FY26 base)." },
-  SUNITATOOL: { guidance: 0.70,  remarks: "Management confident about achieving CAGR of 60–80% over the next 3–5 years." },
 
   // ── FMCG / Consumer ────────────────────────────────────────────────────────
   PNGJL:      { guidance: 0.25,  remarks: "Targets FY27 revenue of INR 13,500 Cr (+25% YoY) with 7.5% EBITDA margin." },
