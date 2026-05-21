@@ -6,9 +6,9 @@ const supabase = createClient(
 );
 
 const STATUS_STYLE: Record<string, string> = {
-  success: "text-emerald-400",
-  running: "text-yellow-400",
-  failed: "text-red-400",
+  success: "text-emerald-600",
+  running: "text-yellow-600",
+  failed: "text-red-500",
 };
 
 async function getRuns() {
@@ -43,7 +43,7 @@ export default async function RunsPage() {
       ) : (
         <table className="w-full text-sm border-collapse">
           <thead>
-            <tr className="border-b border-gray-700 text-gray-400 text-left">
+            <tr className="border-b border-gray-200 text-gray-500 text-left">
               <th className="py-2 pr-4">#</th>
               <th className="pr-4">Started (IST)</th>
               <th className="pr-4">Duration</th>
@@ -55,13 +55,13 @@ export default async function RunsPage() {
           </thead>
           <tbody>
             {runs.map((r: any) => (
-              <tr key={r.id} className="border-b border-gray-800">
-                <td className="py-2 pr-4 text-gray-500">{r.id}</td>
-                <td className="pr-4 text-gray-300">{fmt(r.started_at)}</td>
-                <td className="pr-4 text-gray-400">{duration(r.started_at, r.finished_at)}</td>
-                <td className={`pr-4 font-semibold ${STATUS_STYLE[r.status] ?? "text-gray-400"}`}>{r.status}</td>
-                <td className="pr-4 text-right text-gray-300">{r.tokens_used?.toLocaleString() ?? "—"}</td>
-                <td className="pr-4 text-right text-gray-300">
+              <tr key={r.id} className="border-b border-gray-200">
+                <td className="py-2 pr-4 text-gray-400">{r.id}</td>
+                <td className="pr-4 text-gray-700">{fmt(r.started_at)}</td>
+                <td className="pr-4 text-gray-600">{duration(r.started_at, r.finished_at)}</td>
+                <td className={`pr-4 font-semibold ${STATUS_STYLE[r.status] ?? "text-gray-500"}`}>{r.status}</td>
+                <td className="pr-4 text-right text-gray-700">{r.tokens_used?.toLocaleString() ?? "—"}</td>
+                <td className="pr-4 text-right text-gray-700">
                   {r.cache_hit_rate != null ? `${(Number(r.cache_hit_rate) * 100).toFixed(0)}%` : "—"}
                 </td>
                 <td className="text-gray-500 text-xs">{r.notes ?? ""}</td>

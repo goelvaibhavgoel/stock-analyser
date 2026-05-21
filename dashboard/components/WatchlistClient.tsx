@@ -46,40 +46,40 @@ type SortDir   = "asc" | "desc";
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 const CAP_STYLE: Record<string, string> = {
-  LARGE: "bg-blue-900/50 text-blue-300",
-  MID:   "bg-purple-900/50 text-purple-300",
-  SMALL: "bg-orange-900/50 text-orange-300",
+  LARGE: "bg-blue-100 text-blue-700",
+  MID:   "bg-purple-100 text-purple-700",
+  SMALL: "bg-orange-100 text-orange-700",
 };
 
 function pctColor(v: number | null) {
-  if (v == null) return "text-gray-500";
-  if (v >= 20) return "text-emerald-400 font-semibold";
+  if (v == null) return "text-gray-400";
+  if (v >= 20) return "text-emerald-600 font-semibold";
   if (v >= 10) return "text-emerald-500";
-  if (v > 0)   return "text-gray-300";
-  if (v < -10) return "text-red-400";
-  return "text-orange-400";
+  if (v > 0)   return "text-gray-600";
+  if (v < -10) return "text-red-500";
+  return "text-orange-500";
 }
 
 function cmpPctColor(v: number | null) {
-  if (v == null) return "text-gray-500";
-  if (v > 0)    return "text-emerald-400";
-  if (v < 0)    return "text-red-400";
-  return "text-gray-400";
+  if (v == null) return "text-gray-400";
+  if (v > 0)    return "text-emerald-600";
+  if (v < 0)    return "text-red-500";
+  return "text-gray-500";
 }
 
 function volRatioColor(r: number | null) {
-  if (r == null) return "text-gray-500";
-  if (r > 1.5)  return "text-emerald-400";
-  if (r > 1.0)  return "text-yellow-400";
-  if (r < 0.7)  return "text-red-400";
-  return "text-gray-300";
+  if (r == null) return "text-gray-400";
+  if (r > 1.5)  return "text-emerald-600";
+  if (r > 1.0)  return "text-yellow-600";
+  if (r < 0.7)  return "text-red-500";
+  return "text-gray-600";
 }
 
 function cmpDmaColor(v: number | null) {
-  if (v == null) return "text-gray-500";
-  if (v > 5)    return "text-emerald-400";
+  if (v == null) return "text-gray-400";
+  if (v > 5)    return "text-emerald-600";
   if (v > 0)    return "text-emerald-600";
-  if (v < -5)   return "text-red-400";
+  if (v < -5)   return "text-red-500";
   return "text-red-500";
 }
 
@@ -123,7 +123,7 @@ function cmpVsDma50Val(q: QuoteData | null): number | null {
 function ExternalLinkIcon() {
   return (
     <svg
-      className="inline w-2.5 h-2.5 shrink-0 text-gray-600 hover:text-gray-300 transition-colors"
+      className="inline w-2.5 h-2.5 shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -148,10 +148,10 @@ function SortArrows({
   sortDir: SortDir;
 }) {
   if (sortField !== field) {
-    return <span className="text-gray-700 leading-none">↕</span>;
+    return <span className="text-gray-400 leading-none">↕</span>;
   }
   return (
-    <span className="text-blue-400 leading-none">
+    <span className="text-blue-600 leading-none">
       {sortDir === "asc" ? "↑" : "↓"}
     </span>
   );
@@ -229,10 +229,10 @@ function RefreshBtn({
     "inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium transition-colors select-none";
 
   let colorClass =
-    "bg-gray-800 border border-gray-600 hover:border-gray-400 text-gray-300 cursor-pointer";
-  if (busy)             colorClass = "bg-gray-800 border border-gray-700 text-gray-500 cursor-not-allowed";
-  if (state === "done") colorClass = "bg-emerald-900/60 border border-emerald-700 text-emerald-300 cursor-not-allowed";
-  if (state === "error") colorClass = "bg-red-900/60 border border-red-700 text-red-300 cursor-not-allowed";
+    "bg-white border border-gray-300 hover:border-gray-500 text-gray-700 cursor-pointer";
+  if (busy)             colorClass = "bg-gray-50 border border-gray-200 text-gray-400 cursor-not-allowed";
+  if (state === "done") colorClass = "bg-emerald-50 border border-emerald-400 text-emerald-700 cursor-not-allowed";
+  if (state === "error") colorClass = "bg-red-50 border border-red-400 text-red-600 cursor-not-allowed";
 
   return (
     <button onClick={onClick} disabled={busy} className={`${baseClass} ${colorClass}`}>
@@ -450,7 +450,7 @@ export function WatchlistClient({
         <h1 className="text-xl font-semibold">Watchlist</h1>
         <RefreshBtn state={refreshState} countdown={countdown} onClick={handleRefresh} label="↻ Refresh" />
         <RefreshBtn state={refreshAllState} countdown={countdownAll} onClick={handleRefreshAll} label="↻ Refresh All" />
-        <span className="ml-auto text-xs text-gray-500">
+        <span className="ml-auto text-xs text-gray-400">
           {initialRows.length} stocks · as of {latestDate}
         </span>
       </div>
@@ -462,17 +462,17 @@ export function WatchlistClient({
           placeholder="Search stock…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="bg-gray-900 border border-gray-700 text-gray-200 text-xs rounded px-3 py-1.5 w-44 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+          className="bg-white border border-gray-300 text-gray-800 text-xs rounded px-3 py-1.5 w-44 placeholder-gray-400 focus:outline-none focus:border-gray-500"
         />
         <button
           onClick={() => setFilterGoldenCross((v) => !v)}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
             filterGoldenCross
-              ? "bg-emerald-900/50 border-emerald-600 text-emerald-300"
-              : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500"
+              ? "bg-emerald-50 border-emerald-400 text-emerald-700"
+              : "bg-white border-gray-300 text-gray-500 hover:border-gray-400"
           }`}
         >
-          <span className={filterGoldenCross ? "text-emerald-400" : "text-gray-600"}>▲</span>
+          <span className={filterGoldenCross ? "text-emerald-600" : "text-gray-400"}>▲</span>
           50 DMA &gt; 200 DMA
         </button>
         {(searchQuery || filterGoldenCross || sortField) && (
@@ -483,48 +483,48 @@ export function WatchlistClient({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-12rem)] rounded-lg border border-gray-800">
+      <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-12rem)] rounded-lg border border-gray-200">
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-gray-900 border-b border-gray-700 text-gray-400 text-xs uppercase tracking-wide">
-              <th className="py-3 px-4 text-left bg-gray-900">Stock</th>
-              <th className="px-3 text-left bg-gray-900">Sector</th>
-              <th className="px-3 text-right bg-gray-900">CMP</th>
-              <th className="px-3 text-right bg-gray-900">PE</th>
-              <th className="px-3 text-right bg-gray-900">Ind PE</th>
-              <th className="px-3 text-right bg-gray-900">
-                Revenue<br /><span className="text-gray-600 normal-case">FY26 Cr</span>
+            <tr className="bg-gray-100 border-b border-gray-200 text-gray-500 text-xs uppercase tracking-wide">
+              <th className="py-3 px-4 text-left bg-gray-100">Stock</th>
+              <th className="px-3 text-left bg-gray-100">Sector</th>
+              <th className="px-3 text-right bg-gray-100">CMP</th>
+              <th className="px-3 text-right bg-gray-100">PE</th>
+              <th className="px-3 text-right bg-gray-100">Ind PE</th>
+              <th className="px-3 text-right bg-gray-100">
+                Revenue<br /><span className="text-gray-400 normal-case">FY26 Cr</span>
               </th>
-              <th className="px-3 text-right bg-gray-900">
-                Rev Growth<br /><span className="text-gray-600 normal-case">YoY %</span>
+              <th className="px-3 text-right bg-gray-100">
+                Rev Growth<br /><span className="text-gray-400 normal-case">YoY %</span>
               </th>
-              <th className="px-3 text-right bg-gray-900">
-                Net Profit<br /><span className="text-gray-600 normal-case">FY26 Cr</span>
+              <th className="px-3 text-right bg-gray-100">
+                Net Profit<br /><span className="text-gray-400 normal-case">FY26 Cr</span>
               </th>
-              <th className="px-3 text-right bg-gray-900">
-                NP Growth<br /><span className="text-gray-600 normal-case">YoY %</span>
+              <th className="px-3 text-right bg-gray-100">
+                NP Growth<br /><span className="text-gray-400 normal-case">YoY %</span>
               </th>
-              <th className="px-3 text-right bg-gray-900">200 DMA</th>
-              <th className="px-3 text-right bg-gray-900">50 DMA</th>
+              <th className="px-3 text-right bg-gray-100">200 DMA</th>
+              <th className="px-3 text-right bg-gray-100">50 DMA</th>
               <th
-                className="px-3 text-right bg-gray-900 cursor-pointer hover:text-gray-200 select-none"
+                className="px-3 text-right bg-gray-100 cursor-pointer hover:text-gray-700 select-none"
                 onClick={() => toggleSort("cmpDma50")}
               >
                 <div className="flex items-center justify-end gap-1">
                   CMP/DMA-50
                   <SortArrows field="cmpDma50" sortField={sortField} sortDir={sortDir} />
                 </div>
-                <span className="text-gray-600 normal-case font-normal">% diff</span>
+                <span className="text-gray-400 normal-case font-normal">% diff</span>
               </th>
               <th
-                className="px-4 text-right bg-gray-900 cursor-pointer hover:text-gray-200 select-none"
+                className="px-4 text-right bg-gray-100 cursor-pointer hover:text-gray-700 select-none"
                 onClick={() => toggleSort("volRatio")}
               >
                 <div className="flex items-center justify-end gap-1">
                   Vol Ratio
                   <SortArrows field="volRatio" sortField={sortField} sortDir={sortDir} />
                 </div>
-                <span className="text-gray-600 normal-case font-normal">7d/30d</span>
+                <span className="text-gray-400 normal-case font-normal">7d/30d</span>
               </th>
             </tr>
           </thead>
@@ -541,10 +541,10 @@ export function WatchlistClient({
               const cmpDma50  = cmpVsDma50Val(q);
 
               const dma200Color = q?.cmp && q?.dma_200
-                ? Number(q.cmp) > Number(q.dma_200) ? "text-emerald-400" : "text-red-400"
+                ? Number(q.cmp) > Number(q.dma_200) ? "text-emerald-600" : "text-red-500"
                 : "text-gray-400";
               const dma50Color = q?.cmp && q?.dma_50
-                ? Number(q.cmp) > Number(q.dma_50) ? "text-emerald-400" : "text-red-400"
+                ? Number(q.cmp) > Number(q.dma_50) ? "text-emerald-600" : "text-red-500"
                 : "text-gray-400";
 
               const hasEvent = stocksWithEvents.has(row.id);
@@ -552,13 +552,13 @@ export function WatchlistClient({
               return (
                 <tr
                   key={row.id}
-                  className="border-b border-gray-800 hover:bg-gray-900/60 transition-colors"
+                  className="border-b border-gray-200 hover:bg-blue-50 transition-colors"
                 >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1.5">
                       <Link
                         href={`/stock/${row.nse_code}`}
-                        className="text-blue-400 hover:text-blue-200 font-semibold text-sm"
+                        className="text-blue-600 hover:text-blue-800 font-semibold text-sm"
                       >
                         {row.nse_code}
                       </Link>
@@ -573,7 +573,7 @@ export function WatchlistClient({
                       </a>
                       {hasEvent && (
                         <span
-                          className="inline-block w-2 h-2 rounded-full bg-emerald-400 shrink-0"
+                          className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0"
                           title="New event today"
                         />
                       )}
@@ -583,7 +583,7 @@ export function WatchlistClient({
                     </div>
                   </td>
                   <td className="px-3">
-                    <div className="text-gray-300 text-xs">{row.sector}</div>
+                    <div className="text-gray-700 text-xs">{row.sector}</div>
                     {row.market_cap_bucket && (
                       <span
                         className={`text-[10px] px-1.5 py-0.5 rounded mt-0.5 inline-block ${CAP_STYLE[row.market_cap_bucket] ?? ""}`}
@@ -593,14 +593,14 @@ export function WatchlistClient({
                     )}
                   </td>
                   <td className="px-3 text-right">
-                    <div className="text-white font-medium">
+                    <div className="text-gray-900 font-medium">
                       {q?.cmp != null ? fmt(Number(q.cmp), 1) : "—"}
                     </div>
                     <div className={`text-xs ${cmpPctColor(q?.pct_change != null ? Number(q.pct_change) : null)}`}>
                       {q?.pct_change != null ? pctFmt(Number(q.pct_change)) : ""}
                     </div>
                   </td>
-                  <td className="px-3 text-right text-gray-300">
+                  <td className="px-3 text-right text-gray-700">
                     {q?.pe != null ? Number(q.pe).toFixed(1) : "—"}
                   </td>
                   <td className="px-3 text-right text-gray-500">
@@ -608,18 +608,18 @@ export function WatchlistClient({
                   </td>
                   <td className="px-3 text-right">
                     {rev != null
-                      ? <span className="text-gray-300">{fmt(Number(rev))}</span>
-                      : <span className="text-yellow-700 text-xs italic">Awaited</span>}
+                      ? <span className="text-gray-700">{fmt(Number(rev))}</span>
+                      : <span className="text-yellow-600 text-xs italic">Awaited</span>}
                   </td>
-                  <td className={`px-3 text-right ${rev != null ? pctColor(revGrowth) : "text-gray-600"}`}>
+                  <td className={`px-3 text-right ${rev != null ? pctColor(revGrowth) : "text-gray-400"}`}>
                     {rev != null ? (revGrowth != null ? pctFmt(revGrowth) : "—") : "—"}
                   </td>
                   <td className="px-3 text-right">
                     {np != null
-                      ? <span className="text-gray-300">{fmt(Number(np))}</span>
-                      : <span className="text-yellow-700 text-xs italic">Awaited</span>}
+                      ? <span className="text-gray-700">{fmt(Number(np))}</span>
+                      : <span className="text-yellow-600 text-xs italic">Awaited</span>}
                   </td>
-                  <td className={`px-3 text-right ${np != null ? pctColor(npGrowth) : "text-gray-600"}`}>
+                  <td className={`px-3 text-right ${np != null ? pctColor(npGrowth) : "text-gray-400"}`}>
                     {np != null ? (npGrowth != null ? pctFmt(npGrowth) : "—") : "—"}
                   </td>
                   <td className="px-3 text-right">
@@ -634,7 +634,7 @@ export function WatchlistClient({
                     {q?.dma_50 != null &&
                       q?.dma_200 != null &&
                       Math.abs(Number(q.dma_50) - Number(q.dma_200)) / Number(q.dma_200) <= 0.02 && (
-                        <span className="ml-1 text-yellow-400" title="DMA-50 within 2% of DMA-200">★</span>
+                        <span className="ml-1 text-yellow-500" title="DMA-50 within 2% of DMA-200">★</span>
                       )}
                   </td>
                   <td className={`px-3 text-right font-medium ${cmpDmaColor(cmpDma50)}`}>
@@ -651,30 +651,30 @@ export function WatchlistClient({
       </div>
 
       {/* Legend */}
-      <div className="mt-3 flex gap-6 text-xs text-gray-600 flex-wrap">
+      <div className="mt-3 flex gap-6 text-xs text-gray-500 flex-wrap">
         <span>
           DMA-200/50:{" "}
-          <span className="text-emerald-500">green</span>=CMP above ·{" "}
-          <span className="text-red-400">red</span>=CMP below ·{" "}
-          <span className="text-yellow-400">★</span>=DMA-50 within 2% of DMA-200
+          <span className="text-emerald-600">green</span>=CMP above ·{" "}
+          <span className="text-red-500">red</span>=CMP below ·{" "}
+          <span className="text-yellow-500">★</span>=DMA-50 within 2% of DMA-200
         </span>
         <span>
           Rev/NP growth:{" "}
-          <span className="text-emerald-400">≥20%</span> ·{" "}
-          <span className="text-orange-400">0-10%</span> ·{" "}
-          <span className="text-red-400">negative</span>
+          <span className="text-emerald-600">≥20%</span> ·{" "}
+          <span className="text-orange-500">0-10%</span> ·{" "}
+          <span className="text-red-500">negative</span>
         </span>
         <span>
           CMP/DMA-50:{" "}
-          <span className="text-emerald-400">+ve</span>=above ·{" "}
-          <span className="text-red-400">-ve</span>=below
+          <span className="text-emerald-600">+ve</span>=above ·{" "}
+          <span className="text-red-500">-ve</span>=below
         </span>
         <span>
           Vol ratio:{" "}
-          <span className="text-emerald-400">≥1.5×</span> elevated ·{" "}
-          <span className="text-red-400">≤0.7×</span> suppressed
+          <span className="text-emerald-600">≥1.5×</span> elevated ·{" "}
+          <span className="text-red-500">≤0.7×</span> suppressed
         </span>
-        <span className="ml-auto text-gray-700 italic">CMP auto-refreshes hourly · Mon–Fri 9:15–16:00 IST</span>
+        <span className="ml-auto text-gray-400 italic">CMP auto-refreshes hourly · Mon–Fri 9:15–16:00 IST</span>
       </div>
     </div>
   );

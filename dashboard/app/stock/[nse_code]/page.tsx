@@ -30,11 +30,11 @@ function yoy(latest: number | null, prev: number | null): number | null {
 
 function pctColor(v: number | null) {
   if (v == null) return "";
-  if (v >= 20) return "text-emerald-400";
+  if (v >= 20) return "text-emerald-600";
   if (v >= 10) return "text-emerald-500";
-  if (v > 0)   return "text-gray-300";
-  if (v < -10) return "text-red-400";
-  return "text-orange-400";
+  if (v > 0)   return "text-gray-600";
+  if (v < -10) return "text-red-500";
+  return "text-orange-500";
 }
 
 function compute7dAvg(volume7d: any): number | null {
@@ -128,10 +128,10 @@ async function getData(nse_code: string) {
 
 function StatCard({ label, value, sub, valueClass = "" }: { label: string; value: string; sub?: string; valueClass?: string }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded p-2.5">
+    <div className="bg-white border border-gray-200 rounded p-2.5">
       <div className="text-[11px] text-gray-500 mb-0.5 leading-tight">{label}</div>
       <div className={`text-sm font-bold ${valueClass}`}>{value}</div>
-      {sub && <div className="text-[10px] text-gray-600 mt-0.5 leading-tight">{sub}</div>}
+      {sub && <div className="text-[10px] text-gray-500 mt-0.5 leading-tight">{sub}</div>}
     </div>
   );
 }
@@ -139,7 +139,7 @@ function StatCard({ label, value, sub, valueClass = "" }: { label: string; value
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mt-4">
-      <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 pb-0.5 border-b border-gray-800">
+      <h2 className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2 pb-0.5 border-b border-gray-200">
         {title}
       </h2>
       {children}
@@ -194,15 +194,15 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
   const marginLabel = isBankingOrNBFC ? "Financing Margin" : "EBITDA Margin";
 
   const CAP_STYLE: Record<string, string> = {
-    LARGE: "bg-blue-900/50 text-blue-300",
-    MID:   "bg-purple-900/50 text-purple-300",
-    SMALL: "bg-orange-900/50 text-orange-300",
+    LARGE: "bg-blue-100 text-blue-700",
+    MID:   "bg-purple-100 text-purple-700",
+    SMALL: "bg-orange-100 text-orange-700",
   };
 
   return (
     <div className="max-w-5xl">
       {/* Back */}
-      <Link href="/" className="text-gray-600 hover:text-gray-400 text-xs">← Watchlist</Link>
+      <Link href="/" className="text-gray-500 hover:text-gray-700 text-xs">← Watchlist</Link>
 
       {/* Header */}
       <div className="mt-1.5 flex flex-wrap items-center gap-3">
@@ -215,14 +215,14 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
           )}
           {verdict && (
             <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-              verdict.growth_label === "H" ? "bg-emerald-900 text-emerald-300 border border-emerald-700" :
-              verdict.growth_label === "M" ? "bg-yellow-900 text-yellow-300 border border-yellow-700" :
-              "bg-red-900 text-red-300 border border-red-700"
+              verdict.growth_label === "H" ? "bg-emerald-100 text-emerald-700 border border-emerald-300" :
+              verdict.growth_label === "M" ? "bg-yellow-100 text-yellow-700 border border-yellow-300" :
+              "bg-red-100 text-red-600 border border-red-300"
             }`}>{verdict.growth_label}</span>
           )}
           <span className="text-gray-500 text-xs">{stock.name}</span>
-          <span className="text-gray-700 text-xs">·</span>
-          <span className="text-gray-600 text-xs">{stock.sector}</span>
+          <span className="text-gray-400 text-xs">·</span>
+          <span className="text-gray-500 text-xs">{stock.sector}</span>
         </div>
         <div className="ml-auto text-right">
           <div className="text-lg font-bold">{quote?.cmp != null ? fmt(Number(quote.cmp), 2) : "—"}</div>
@@ -316,20 +316,20 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
                   <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
                     <div className="w-full flex items-end" style={{ height: 32 }}>
                       <div
-                        className={`w-full rounded-t ${isHighVsAvg ? "bg-emerald-600" : "bg-gray-600"}`}
+                        className={`w-full rounded-t ${isHighVsAvg ? "bg-emerald-500" : "bg-gray-300"}`}
                         style={{ height: `${pct}%`, minHeight: 2 }}
                         title={`${entry.date}: ${(vol / 1e5).toFixed(2)}L`}
                       />
                     </div>
-                    <div className="text-[9px] text-gray-600 truncate w-full text-center">
+                    <div className="text-[9px] text-gray-400 truncate w-full text-center">
                       {entry.date?.slice(5)}
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="text-xs text-gray-600 mt-1">
-              <span className="inline-block w-2 h-2 bg-emerald-600 rounded-sm mr-1" />above 30d avg · <span className="inline-block w-2 h-2 bg-gray-600 rounded-sm mr-1" />below
+            <div className="text-xs text-gray-500 mt-1">
+              <span className="inline-block w-2 h-2 bg-emerald-500 rounded-sm mr-1" />above 30d avg · <span className="inline-block w-2 h-2 bg-gray-300 rounded-sm mr-1" />below
             </div>
           </div>
         )}
@@ -340,7 +340,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
         <div className="overflow-x-auto">
           <table className="text-sm w-full">
             <thead>
-              <tr className="text-gray-500 text-xs border-b border-gray-800">
+              <tr className="text-gray-500 text-xs border-b border-gray-200">
                 <th className="py-1 pr-6 text-left">FY</th>
                 {QUARTERS.map((q) => <th key={q} className="pr-4 text-right">{q}</th>)}
                 <th className="text-right">Total</th>
@@ -348,25 +348,25 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
             </thead>
             <tbody>
               {(["FY25", "FY26"] as const).map((fy) => (
-                <tr key={fy} className="border-b border-gray-800/50">
-                  <td className="py-1 pr-6 font-medium text-gray-300">{fy}</td>
+                <tr key={fy} className="border-b border-gray-200/70">
+                  <td className="py-1 pr-6 font-medium text-gray-700">{fy}</td>
                   {QUARTERS.map((q) => {
                     const cell = qtr[fy][q];
                     return (
-                      <td key={q} className="pr-4 text-right text-gray-300">
+                      <td key={q} className="pr-4 text-right text-gray-700">
                         {cell.is_pending
                           ? <span className="text-yellow-600 text-xs">Awaited</span>
                           : cell.revenue != null ? fmt(Number(cell.revenue))
-                          : <span className="text-gray-700">—</span>}
+                          : <span className="text-gray-300">—</span>}
                       </td>
                     );
                   })}
-                  <td className="text-right text-gray-200 font-medium">
+                  <td className="text-right text-gray-800 font-medium">
                     {qTotal(fy, "revenue") != null ? fmt(qTotal(fy, "revenue")!) : "—"}
                   </td>
                 </tr>
               ))}
-              <tr className="border-b border-gray-800/50 text-xs">
+              <tr className="border-b border-gray-200/70 text-xs">
                 <td className="py-1 pr-6 text-gray-500">YoY Δ</td>
                 {QUARTERS.map((q) => {
                   const v25 = qtr["FY25"][q].revenue;
@@ -394,7 +394,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
         <div className="overflow-x-auto">
           <table className="text-sm w-full">
             <thead>
-              <tr className="text-gray-500 text-xs border-b border-gray-800">
+              <tr className="text-gray-500 text-xs border-b border-gray-200">
                 <th className="py-1 pr-6 text-left">FY</th>
                 {QUARTERS.map((q) => <th key={q} className="pr-4 text-right">{q}</th>)}
                 <th className="text-right">Total</th>
@@ -402,25 +402,25 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
             </thead>
             <tbody>
               {(["FY25", "FY26"] as const).map((fy) => (
-                <tr key={fy} className="border-b border-gray-800/50">
-                  <td className="py-1 pr-6 font-medium text-gray-300">{fy}</td>
+                <tr key={fy} className="border-b border-gray-200/70">
+                  <td className="py-1 pr-6 font-medium text-gray-700">{fy}</td>
                   {QUARTERS.map((q) => {
                     const cell = qtr[fy][q];
                     return (
-                      <td key={q} className="pr-4 text-right text-gray-300">
+                      <td key={q} className="pr-4 text-right text-gray-700">
                         {cell.is_pending
                           ? <span className="text-yellow-600 text-xs">Awaited</span>
                           : cell.net_profit != null ? fmt(Number(cell.net_profit))
-                          : <span className="text-gray-700">—</span>}
+                          : <span className="text-gray-300">—</span>}
                       </td>
                     );
                   })}
-                  <td className="text-right text-gray-200 font-medium">
+                  <td className="text-right text-gray-800 font-medium">
                     {qTotal(fy, "net_profit") != null ? fmt(qTotal(fy, "net_profit")!) : "—"}
                   </td>
                 </tr>
               ))}
-              <tr className="border-b border-gray-800/50 text-xs">
+              <tr className="border-b border-gray-200/70 text-xs">
                 <td className="py-1 pr-6 text-gray-500">YoY Δ</td>
                 {QUARTERS.map((q) => {
                   const v25 = qtr["FY25"][q].net_profit;
@@ -450,7 +450,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
             href={`https://www.screener.in/company/${stock.nse_code}/consolidated/`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 border border-gray-700 hover:border-blue-500 rounded text-xs text-gray-300 hover:text-blue-400 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-blue-400 rounded text-xs text-gray-600 hover:text-blue-600 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -461,7 +461,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
             href={`https://www.nseindia.com/get-quotes/equity?symbol=${stock.nse_code}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 border border-gray-700 hover:border-blue-500 rounded text-xs text-gray-300 hover:text-blue-400 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:border-blue-400 rounded text-xs text-gray-600 hover:text-blue-600 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -474,11 +474,11 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
       {/* Concall */}
       {concall?.json_analysis && (
         <Section title={`Latest Concall Analysis · ${concall.filing_date}`}>
-          <div className="bg-gray-900 border border-gray-800 rounded p-3 space-y-1.5 text-xs">
+          <div className="bg-gray-50 border border-gray-200 rounded p-3 space-y-1.5 text-xs">
             {Object.entries(concall.json_analysis).map(([k, v]) => (
               <div key={k} className="flex gap-2">
                 <span className="text-gray-500 capitalize shrink-0 w-32">{k.replace(/_/g, " ")}</span>
-                <span className="text-gray-200">{Array.isArray(v) ? (v as string[]).join("; ") : String(v)}</span>
+                <span className="text-gray-800">{Array.isArray(v) ? (v as string[]).join("; ") : String(v)}</span>
               </div>
             ))}
           </div>
@@ -494,11 +494,11 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
                 key={k}
                 label={k.charAt(0).toUpperCase() + k.slice(1)}
                 value={(Number(v) > 0 ? "+" : "") + String(v)}
-                valueClass={Number(v) > 0 ? "text-emerald-400" : Number(v) < 0 ? "text-red-400" : "text-gray-400"}
+                valueClass={Number(v) > 0 ? "text-emerald-600" : Number(v) < 0 ? "text-red-500" : "text-gray-500"}
               />
             ))}
             <StatCard label="Total Score" value={Number(verdict.score).toFixed(1)}
-              valueClass="text-white" />
+              valueClass="text-gray-900" />
           </div>
         </Section>
       )}
@@ -506,12 +506,12 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
       {/* Macro / Events */}
       <Section title="Macro / Events">
         {stockEvents.length === 0 ? (
-          <p className="text-xs text-gray-600">No events found yet. Run <code className="text-blue-400">python run.py --phase macro</code> to fetch.</p>
+          <p className="text-xs text-gray-500">No events found yet. Run <code className="text-blue-600">python run.py --phase macro</code> to fetch.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
-                <tr className="text-gray-500 border-b border-gray-800">
+                <tr className="text-gray-500 border-b border-gray-200">
                   <th className="py-1.5 pr-4 text-left font-normal w-[36%]">Event / Update</th>
                   <th className="pr-4 text-left font-normal w-[10%]">Source</th>
                   <th className="pr-4 text-left font-normal w-[26%]">Link</th>
@@ -525,13 +525,13 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
                   const impact: string = ev.impact ?? "NO_IMPACT";
                   const impactStyle =
                     impact === "GOOD"
-                      ? "text-emerald-400"
+                      ? "text-emerald-600"
                       : impact === "BAD"
-                      ? "text-red-400"
+                      ? "text-red-500"
                       : "text-gray-500";
                   return (
-                    <tr key={i} className="border-b border-gray-800/50 align-top">
-                      <td className="py-1.5 pr-4 text-gray-300 leading-snug">{summary}</td>
+                    <tr key={i} className="border-b border-gray-200/70 align-top">
+                      <td className="py-1.5 pr-4 text-gray-700 leading-snug">{summary}</td>
                       <td className="pr-4 text-gray-500">{ev.source_name ?? "—"}</td>
                       <td className="pr-4">
                         {ev.source_link ? (
@@ -539,7 +539,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
                             href={ev.source_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-500 hover:text-blue-300 truncate block max-w-[220px]"
+                            className="text-blue-600 hover:text-blue-800 truncate block max-w-[220px]"
                             title={ev.source_link}
                           >
                             {ev.source_link.length > 40
@@ -547,7 +547,7 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
                               : ev.source_link}
                           </a>
                         ) : (
-                          <span className="text-gray-700">—</span>
+                          <span className="text-gray-300">—</span>
                         )}
                       </td>
                       <td className={`pr-4 font-medium ${impactStyle}`}>

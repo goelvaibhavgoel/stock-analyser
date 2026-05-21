@@ -6,9 +6,9 @@ const supabase = createClient(
 );
 
 const IMPACT_STYLE: Record<string, string> = {
-  GREEN: "bg-emerald-900 text-emerald-300",
-  RED: "bg-red-900 text-red-300",
-  NEUTRAL: "bg-gray-800 text-gray-400",
+  GREEN: "bg-emerald-100 text-emerald-700",
+  RED: "bg-red-100 text-red-600",
+  NEUTRAL: "bg-gray-100 text-gray-500",
 };
 
 const SECTORS = ["Banking", "IT", "FMCG", "Energy", "Infra", "Metals", "Realty"];
@@ -55,10 +55,10 @@ export default async function MacroPage() {
       <h1 className="text-xl font-semibold mb-4">Macro Events</h1>
       <div className="space-y-8">
         {events.map((ev) => (
-          <div key={ev.id} className="border border-gray-800 rounded p-4">
+          <div key={ev.id} className="border border-gray-200 rounded p-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <div className="text-sm font-semibold text-gray-200">{ev.title}</div>
+                <div className="text-sm font-semibold text-gray-800">{ev.title}</div>
                 {ev.source_url && (
                   <a href={ev.source_url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline mt-0.5 block">
                     Source
