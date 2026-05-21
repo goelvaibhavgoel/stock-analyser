@@ -402,6 +402,7 @@ export function WatchlistClient({
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setDeletedIds((prev) => { const next = new Set(prev); next.add(deleteConfirm.id); return next; });
       setDeleteConfirm(null);
+      router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unknown error";
       alert(`Delete failed: ${msg}\n\nPlease try again.`);
