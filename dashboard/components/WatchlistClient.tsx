@@ -206,7 +206,7 @@ async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp:
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
 const QUICK_WAIT_S  = 90;
 const ALL_WAIT_S    = 8 * 60;
-const AUTO_REFRESH_MS = 60 * 60 * 1000;
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 min — re-read Supabase when GH Actions has updated it
 
 function Spinner() {
   return <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />;
@@ -331,6 +331,8 @@ export function WatchlistClient({
   }, [stockIds.join(",")]);
 
   useEffect(() => {
+    // Immediate refresh on mount if market is open
+    if (isMarketHours()) reloadCmp();
     const id = setInterval(() => { if (isMarketHours()) reloadCmp(); }, AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [reloadCmp]);
@@ -719,7 +721,7 @@ export function WatchlistClient({
         <span>Rev/NP growth: <span className="text-emerald-600">≥20%</span> · <span className="text-orange-500">0-10%</span> · <span className="text-red-500">negative</span></span>
         <span>CMP/DMA-50: <span className="text-emerald-600">+ve</span>=above · <span className="text-red-500">-ve</span>=below</span>
         <span>Vol ratio: <span className="text-emerald-600">≥1.5×</span> elevated · <span className="text-red-500">≤0.7×</span> suppressed</span>
-        <span className="ml-auto text-gray-400 italic">CMP auto-refreshes hourly · Mon–Fri 9:15–16:00 IST</span>
+        <span className="ml-auto text-gray-400 italic">CMP auto-refreshes every 5 min · Mon–Fri 9:15–16:00 IST</span>
       </div>
 
       {/* ── Delete confirmation modal ── */}
