@@ -262,7 +262,15 @@ export function WatchlistClient({
   const [sortDir, setSortDir]                 = useState<SortDir>("desc");
 
   // ── New feature state ──────────────────────────────────────────────────────
-  const [deletedIds, setDeletedIds]           = useState<Set<number>>(new Set());
+  // deletedCodes persisted in localStorage so deleted stocks stay hidden across
+  // hard refreshes, back-navigation, and pipeline re-inserts
+  const [deletedCodes, setDeletedCodes]       = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = localStorage.getItem("watchlist_deleted_codes");
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
+    } catch { return new Set(); }
+  });
   const [deleteConfirm, setDeleteConfirm]     = useState<{ id: number; nse_code: string; name: string } | null>(null);
   const [deleteLoading, setDeleteLoading]     = useState(false);
 
@@ -401,7 +409,12 @@ export function WatchlistClient({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      setDeletedIds((prev) => { const next = new Set(prev); next.add(deleteConfirm.id); return next; });
+      setDeletedCodes((prev) => {
+        const next = new Set(prev);
+        next.add(deleteConfirm.nse_code);
+        try { localStorage.setItem("watchlist_deleted_codes", JSON.stringify(Array.from(next))); } catch {}
+        return next;
+      });
       setDeleteConfirm(null);
       router.refresh();
     } catch (err: unknown) {
@@ -454,7 +467,7 @@ export function WatchlistClient({
 
   // ── Filtered + sorted rows ────────────────────────────────────────────────
   const displayRows = useMemo(() => {
-    let rows = initialRows.filter((r) => !deletedIds.has(r.id));
+    let rows = initialRows.filter((r) => !deletedCodes.has(r.nse_code));
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -487,9 +500,9 @@ export function WatchlistClient({
     }
 
     return rows;
-  }, [initialRows, deletedIds, searchQuery, filterGoldenCross, sortField, sortDir, quoteMap]);
+  }, [initialRows, deletedCodes, searchQuery, filterGoldenCross, sortField, sortDir, quoteMap]);
 
-  const activeCount = initialRows.length - deletedIds.size;
+  const activeCount = initialRows.filter((r) => !deletedCodes.has(r.nse_code)).length;
 
   return (
     <div>
