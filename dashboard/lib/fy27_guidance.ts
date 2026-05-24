@@ -38,7 +38,6 @@ export const FY27_GUIDANCE: Record<string, GuidanceEntry> = {
   VMARCIND:   { guidance: 0.40,  remarks: "Aims to achieve 40%+ revenue growth with 11–12% EBITDA margins in FY27." },
   VILAS:      { guidance: 0.45,  remarks: "Expects 45–50% CRGO volume growth and 40–50% topline growth in FY27; targeting INR 1,000 Cr topline." },
   HIRECT:     { guidance: 0.30,  remarks: "Expects to exceed 30% growth for at least the next 3 years." },
-  OSWALPUMPS: { guidance: 0.325, remarks: "Expects 30–35% revenue growth over the medium term." },
   APEXECO:    { guidance: 0.35,  remarks: "Management guidance of 30–40% annual revenue growth in the near term." },
   SADHAV:     { guidance: 0.27,  remarks: "Aims to achieve revenue (ex. Shipbuilding JV) of INR 120–130 Cr in FY27 and INR 180 Cr by FY28." },
   GANESHIN:   { guidance: 0.225, remarks: "Aspirational goal of INR 1,000 Cr revenue and INR 90 Cr PAT by FY27; long-term growth target of 20–25%." },

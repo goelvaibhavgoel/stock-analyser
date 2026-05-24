@@ -39,7 +39,6 @@ stocks:
   - { nse_code: TARIL,       bse_code: "532953", name: Transformers & Rectifiers India Ltd, sector: Infra,   market_cap_bucket: MID,   groww_slug: transformers-and-rectifiers-india-ltd }
   - { nse_code: VMARCIND,                        name: V-Marc India Ltd,                    sector: Infra,   market_cap_bucket: SMALL }
   - { nse_code: HIRECT,                          name: Hind Rectifiers Ltd,                 sector: Infra,   market_cap_bucket: SMALL }
-  - { nse_code: OSWALPUMPS,                      name: Oswal Pumps Ltd,                     sector: Infra,   market_cap_bucket: SMALL }
 
   # ── METALS ───────────────────────────────────────────────────────────
   - { nse_code: VENUSPIPES,  bse_code: "543249", name: Venus Pipes and Tubes Ltd,           sector: Metals,  market_cap_bucket: SMALL, groww_slug: venus-pipes-tubes-ltd }
