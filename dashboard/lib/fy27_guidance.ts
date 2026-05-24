@@ -59,7 +59,6 @@ export const FY27_GUIDANCE: Record<string, GuidanceEntry> = {
   GRSE:       { guidance: 0.225, remarks: "Aims to maintain Revenue CAGR of 20–25% over a 5-year period." },
 
   // ── Auto ───────────────────────────────────────────────────────────────────
-  SMLMAH:     { guidance: 0.39,  remarks: "Targeting revenue of INR 15,000 Cr by FY31 (39% CAGR from FY26 base)." },
 
   // ── FMCG / Consumer ────────────────────────────────────────────────────────
   PNGJL:      { guidance: 0.25,  remarks: "Targets FY27 revenue of INR 13,500 Cr (+25% YoY) with 7.5% EBITDA margin." },

@@ -73,7 +73,6 @@ stocks:
   # ── AUTO ─────────────────────────────────────────────────────────────
   - { nse_code: RANEHOLDIN,  bse_code: "505036", name: Rane Holdings Ltd,                   sector: Auto,    market_cap_bucket: SMALL, groww_slug: rane-holdings-ltd }
   - { nse_code: PRECAM,      bse_code: "539636", name: Precision Camshafts Ltd,             sector: Auto,    market_cap_bucket: SMALL, groww_slug: precision-camshafts-ltd }
-  - { nse_code: SMLMAH,      bse_code: "505192", name: SML Isuzu Ltd,                       sector: Auto,    market_cap_bucket: MID }
 
   # ── FMCG / CONSUMER ──────────────────────────────────────────────────
   - { nse_code: SKYGOLD,     bse_code: "541967", name: Sky Gold Ltd,                        sector: FMCG,    market_cap_bucket: SMALL, groww_slug: sky-gold-ltd }
