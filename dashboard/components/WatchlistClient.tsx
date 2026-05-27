@@ -205,9 +205,9 @@ async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp:
 
 // ── Refresh button ────────────────────────────────────────────────────────────
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
-const QUICK_WAIT_S  = 90;
-const ALL_WAIT_S    = 8 * 60;
-const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 min — re-read Supabase when GH Actions has updated it
+const QUICK_WAIT_S  = 3 * 60;          // 3 min — refresh_cmp.yml takes ~2-3 min
+const ALL_WAIT_S    = 12 * 60;         // 12 min — full refresh.yml takes ~10-15 min
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 min — always re-read Supabase
 
 function Spinner() {
   return <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />;
@@ -341,9 +341,9 @@ export function WatchlistClient({
   }, [stockIds.join(",")]);
 
   useEffect(() => {
-    // Immediate refresh on mount if market is open
-    if (isMarketHours()) reloadCmp();
-    const id = setInterval(() => { if (isMarketHours()) reloadCmp(); }, AUTO_REFRESH_MS);
+    // Always re-read Supabase on mount and every 5 min so data stays current
+    reloadCmp();
+    const id = setInterval(() => reloadCmp(), AUTO_REFRESH_MS);
     return () => clearInterval(id);
   }, [reloadCmp]);
 
@@ -373,22 +373,37 @@ export function WatchlistClient({
 
   const handleRefresh = async () => {
     setRefreshState("triggering");
+    // Immediately show latest already-in-Supabase data while pipeline runs
+    reloadCmp();
     try {
       const res = await fetch("/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "quick" }) });
-      if (!res.ok) throw new Error();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setRefreshState("waiting");
       startCountdown(QUICK_WAIT_S, setCountdown, timerRef, async () => { await reloadQuotes(); setRefreshState("done"); setTimeout(() => setRefreshState("idle"), 3000); });
-    } catch { setRefreshState("error"); setTimeout(() => setRefreshState("idle"), 3000); }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      alert(`Refresh failed: ${msg}`);
+      setRefreshState("error");
+      setTimeout(() => setRefreshState("idle"), 3000);
+    }
   };
 
   const handleRefreshAll = async () => {
     setRefreshAllState("triggering");
+    reloadCmp();
     try {
       const res = await fetch("/api/refresh", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: "all" }) });
-      if (!res.ok) throw new Error();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setRefreshAllState("waiting");
       startCountdown(ALL_WAIT_S, setCountdownAll, timerAllRef, () => { router.refresh(); setRefreshAllState("done"); setTimeout(() => setRefreshAllState("idle"), 3000); });
-    } catch { setRefreshAllState("error"); setTimeout(() => setRefreshAllState("idle"), 3000); }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      alert(`Refresh failed: ${msg}`);
+      setRefreshAllState("error");
+      setTimeout(() => setRefreshAllState("idle"), 3000);
+    }
   };
 
   const toggleSort = (field: "cmpDma50" | "volRatio") => {

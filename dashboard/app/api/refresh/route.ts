@@ -11,10 +11,11 @@ export async function POST(req: NextRequest) {
 
   const { mode } = (await req.json()) as { mode: "quick" | "all" };
 
-  const workflow = mode === "all" ? "refresh.yml" : "manual_run.yml";
-  const inputs   = mode === "all"
-    ? { phases: "technical,fundamental,macro" }
-    : { phase: "technical" };
+  // quick = refresh_cmp.yml (technical only, no Tesseract, ~2-3 min)
+  // all   = refresh.yml    (technical + fundamental + macro, ~10-15 min)
+  const workflow = mode === "all" ? "refresh.yml" : "refresh_cmp.yml";
+  const body: Record<string, unknown> = { ref: "main" };
+  if (mode === "all") body.inputs = { phases: "technical,fundamental,macro" };
 
   const res = await fetch(
     `https://api.github.com/repos/${OWNER}/${REPO}/actions/workflows/${workflow}/dispatches`,
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
         "X-GitHub-Api-Version": "2022-11-28",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ref: "main", inputs }),
+      body: JSON.stringify(body),
     }
   );
 
