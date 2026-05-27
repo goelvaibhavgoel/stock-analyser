@@ -175,27 +175,43 @@ function isMarketHours(): boolean {
 }
 
 // ── Fetch helpers ─────────────────────────────────────────────────────────────
+// Limit large enough to cover many null-CMP days + real data beyond them
+const QUOTE_ROW_MULTIPLIER = 10;
+
 async function fetchLatestQuotes(stockIds: number[]): Promise<Record<number, QuoteData>> {
   const { data } = await supabase
     .from("daily_quotes")
     .select("stock_id,date,cmp,pct_change,pe,sector_pe,dma_50,dma_200,volume_7d,avg_volume_30d")
     .in("stock_id", stockIds)
     .order("date", { ascending: false })
-    .limit(stockIds.length * 3);
-  const map: Record<number, QuoteData> = {};
+    .limit(stockIds.length * QUOTE_ROW_MULTIPLIER);
+  // latest row per stock (for DMA), then fallback to most recent row with real CMP
+  const latest: Record<number, QuoteData> = {};
+  const latestCmp: Record<number, QuoteData> = {};
   for (const q of (data ?? []) as QuoteData[]) {
-    if (!map[q.stock_id]) map[q.stock_id] = q;
+    if (!latest[q.stock_id]) latest[q.stock_id] = q;
+    if (!latestCmp[q.stock_id] && q.cmp != null) latestCmp[q.stock_id] = q;
   }
-  return map;
+  for (const [idStr, row] of Object.entries(latest)) {
+    const id = Number(idStr);
+    if (row.cmp == null && latestCmp[id]) {
+      row.cmp = latestCmp[id].cmp;
+      row.pct_change = latestCmp[id].pct_change;
+      row.pe = latestCmp[id].pe;
+    }
+  }
+  return latest;
 }
 
 async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp: number | null; pct_change: number | null }>> {
+  // Only fetch rows where CMP is actually populated so we always show real prices
   const { data } = await supabase
     .from("daily_quotes")
     .select("stock_id,cmp,pct_change")
     .in("stock_id", stockIds)
+    .not("cmp", "is", null)
     .order("date", { ascending: false })
-    .limit(stockIds.length * 3);
+    .limit(stockIds.length);
   const map: Record<number, { cmp: number | null; pct_change: number | null }> = {};
   for (const q of (data ?? []) as any[]) {
     if (!map[q.stock_id]) map[q.stock_id] = { cmp: q.cmp, pct_change: q.pct_change };

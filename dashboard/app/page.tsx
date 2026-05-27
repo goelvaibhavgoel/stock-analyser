@@ -27,7 +27,7 @@ async function getData(): Promise<{ rows: RowData[]; stocksWithEvents: Set<numbe
       .select("stock_id,date,cmp,pct_change,pe,sector_pe,dma_50,dma_200,volume_7d,avg_volume_30d")
       .in("stock_id", stockIds)
       .order("date", { ascending: false })
-      .limit(stockIds.length * 3),
+      .limit(stockIds.length * 10),
     supabase
       .from("fundamentals")
       .select("stock_id,period,revenue,net_profit")
@@ -46,9 +46,20 @@ async function getData(): Promise<{ rows: RowData[]; stocksWithEvents: Set<numbe
       .eq("event_date", today),
   ]);
 
+  // latest row per stock (for DMA), plus fallback CMP from most recent non-null row
   const quoteMap: Record<number, any> = {};
+  const latestCmpMap: Record<number, any> = {};
   for (const q of quotesRes.data ?? []) {
     if (!quoteMap[q.stock_id]) quoteMap[q.stock_id] = q;
+    if (!latestCmpMap[q.stock_id] && q.cmp != null) latestCmpMap[q.stock_id] = q;
+  }
+  for (const [idStr, row] of Object.entries(quoteMap)) {
+    const id = Number(idStr);
+    if (row.cmp == null && latestCmpMap[id]) {
+      row.cmp = latestCmpMap[id].cmp;
+      row.pct_change = latestCmpMap[id].pct_change;
+      row.pe = latestCmpMap[id].pe;
+    }
   }
 
   const fundMap: Record<number, Record<string, any>> = {};

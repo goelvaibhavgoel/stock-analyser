@@ -236,12 +236,17 @@ def _fetch_screener_chart_data(nse_code: str) -> dict:
     chart = _chart_api(cid, "Price-DMA50-DMA200-Volume", days=60)
     vol_series = chart.get("Volume", [])
 
-    return {
+    result: dict = {
         "dma_50":        _latest(chart.get("DMA50", [])),
         "dma_200":       _latest(chart.get("DMA200", [])),
         "volume_7d":     _volume_7d(vol_series) or None,
         "avg_volume_30d": _avg_volume(vol_series, 25),
     }
+    # screener Price series = closing price — use as CMP fallback if NSE fails
+    screener_price = _latest(chart.get("Price", []))
+    if screener_price:
+        result["_screener_cmp"] = screener_price
+    return result
 
 
 # ── Groww.in volume + industry PE ────────────────────────────────────────────
@@ -345,8 +350,15 @@ def fetch_and_store(stock: dict, nse_session: requests.Session) -> bool:
     if nse_raw:
         row.update(_parse_nse_quote(nse_raw))
 
-    # screener.in: DMA-50/200 + volume fallback for stocks without a Groww slug
-    row.update(_fetch_screener_chart_data(nse_code))
+    # screener.in: DMA-50/200 + volume fallback + screener price as CMP fallback
+    screener_data = _fetch_screener_chart_data(nse_code)
+    screener_cmp = screener_data.pop("_screener_cmp", None)
+    row.update(screener_data)
+
+    # If NSE failed to provide CMP, fall back to screener.in closing price
+    if row.get("cmp") is None and screener_cmp:
+        row["cmp"] = screener_cmp
+        log.info("%s: NSE CMP unavailable — using screener.in price %.2f", nse_code, screener_cmp)
 
     # Groww.in technicals: preferred volume source + industry PE
     groww_slug = stock.get("groww_slug")
