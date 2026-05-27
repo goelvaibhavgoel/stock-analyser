@@ -226,8 +226,8 @@ def _avg_volume(series: list, n: int = 25) -> float | None:
     return round(sum(recent) / 25, 0)
 
 
-def _fetch_screener_chart_data(nse_code: str) -> dict:
-    cid = _get_screener_company_id(nse_code)
+def _fetch_screener_chart_data(nse_code: str, screener_code: str | None = None) -> dict:
+    cid = _get_screener_company_id(screener_code or nse_code)
     if not cid:
         log.warning("%s: screener.in company ID not found", nse_code)
         return {}
@@ -351,7 +351,7 @@ def fetch_and_store(stock: dict, nse_session: requests.Session) -> bool:
         row.update(_parse_nse_quote(nse_raw))
 
     # screener.in: DMA-50/200 + volume fallback + screener price as CMP fallback
-    screener_data = _fetch_screener_chart_data(nse_code)
+    screener_data = _fetch_screener_chart_data(nse_code, screener_code=stock.get("screener_code"))
     screener_cmp = screener_data.pop("_screener_cmp", None)
     row.update(screener_data)
 
