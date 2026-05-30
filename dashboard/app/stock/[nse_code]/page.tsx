@@ -72,7 +72,7 @@ async function getData(nse_code: string) {
       .select("date,cmp,pct_change,market_cap_cr,pe,sector_pe,week_52_high,week_52_low,dma_50,dma_200,volume_today,volume_7d,avg_volume_30d")
       .eq("stock_id", sid)
       .order("date", { ascending: false })
-      .limit(1),
+      .limit(10),
     supabase
       .from("fundamentals")
       .select("period,revenue,net_profit,ebitda_margin,pe,pe_12m,promoter_pct")
@@ -114,10 +114,30 @@ async function getData(nse_code: string) {
       .limit(50),
   ]);
 
+  // CMP fallback: use latest row for DMA etc, but fill null CMP from most recent non-null row
+  const quotes = quoteRes.data ?? [];
+  const quote = quotes[0] ?? null;
+  if (quote) {
+    const fallback = quotes.find((q) => q.cmp != null);
+    if (quote.cmp == null && fallback) {
+      quote.cmp = fallback.cmp;
+      quote.pct_change = fallback.pct_change;
+      quote.pe = fallback.pe;
+    }
+  }
+
+  const fundsArr = fundRes.data ?? [];
+  const fundsMap = Object.fromEntries(fundsArr.map((f) => [f.period, f]));
+
+  // PE fallback: daily_quotes.pe is null when NSE is blocked; use fundamentals.pe instead
+  if (quote && quote.pe == null) {
+    quote.pe = fundsMap["FY26"]?.pe ?? fundsMap["FY25"]?.pe ?? null;
+  }
+
   return {
     stock,
-    quote: quoteRes.data?.[0] ?? null,
-    funds: Object.fromEntries((fundRes.data ?? []).map((f) => [f.period, f])),
+    quote,
+    funds: fundsMap,
     quarterly: qtrRes.data ?? [],
     flags: flagRes.data ?? [],
     concall: concallRes.data?.[0] ?? null,
@@ -597,4 +617,4 @@ export default async function StockDetailPage({ params }: { params: { nse_code: 
   );
 }
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
