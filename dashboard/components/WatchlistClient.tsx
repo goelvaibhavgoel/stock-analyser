@@ -222,7 +222,7 @@ async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp:
 // ── Refresh button ────────────────────────────────────────────────────────────
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
 const QUICK_WAIT_S  = 3 * 60;          // 3 min — refresh_cmp.yml takes ~2-3 min
-const ALL_WAIT_S    = 12 * 60;         // 12 min — full refresh.yml takes ~10-15 min
+const ALL_WAIT_S    = 18 * 60;         // 18 min — full refresh.yml takes ~15-18 min
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 min — always re-read Supabase
 
 function Spinner() {
