@@ -94,7 +94,7 @@ def _is_quarter_end_passed(fy: str, q: str) -> bool:
 
 def _float(text: str) -> float | None:
     try:
-        return float(text.replace(",", "").replace("%", "").strip())
+        return float(text.replace(",", "").replace("%", "").replace("₹", "").strip())
     except (ValueError, AttributeError):
         return None
 
@@ -290,8 +290,13 @@ def _parse_ratios(soup: BeautifulSoup) -> dict:
             out["sector_pe"] = val
         elif "stock p/e" in name or name == "p/e":
             out["stock_pe"] = val
+        elif "market cap" in name:
+            raw = val_el.get_text(strip=True)
+            mc = _float(re.sub(r"[Cc]r\.?", "", raw))
+            if mc is not None:
+                out["market_cap_cr"] = mc
         elif "52 week high" in name or "high / low" in name:
-            # Some layouts show "High / Low" as "2700 / 1800"
+            # Shows as "₹9,747/5,760" — split on "/" then strip ₹ prefix
             raw = val_el.get_text(strip=True)
             if "/" in raw:
                 parts = raw.split("/")
@@ -418,6 +423,19 @@ def _upsert_annual(stock_id: int, rows: list[dict], ratios: dict, pe_hist: dict)
         ).execute()
 
 
+def _patch_daily_quotes(db, stock_id: int, ratios: dict) -> None:
+    """Push market data scraped from screener.in ratios box into the latest daily_quotes row."""
+    patch = {}
+    for key in ("week_52_high", "week_52_low", "market_cap_cr"):
+        if ratios.get(key) is not None:
+            patch[key] = ratios[key]
+    if not patch:
+        return
+    latest = db.table("daily_quotes").select("date").eq("stock_id", stock_id).order("date", desc=True).limit(1).execute()
+    if latest.data:
+        db.table("daily_quotes").update(patch).eq("stock_id", stock_id).eq("date", latest.data[0]["date"]).execute()
+
+
 def _upsert_quarterly(stock_id: int, rows: list[dict]) -> None:
     db = get_client()
     for row in rows:
@@ -449,20 +467,20 @@ def fetch_and_store(nse_code: str, screener_code: str | None = None, force_stand
     need_quarters = [fq for fq in target_quarters if _quarter_needs_fetch(stock_id, *fq)]
 
     if not need_annual and not need_quarters:
-        log.info("%s: all static data already in DB — updating PE only", nse_code)
+        log.info("%s: all static data already in DB — updating PE + market data", nse_code)
         result = _get_html(screener_code, force_standalone=force_standalone)
         if result:
             soup = BeautifulSoup(result[0], "lxml")
             ratios  = _parse_ratios(soup)
             pe_hist = _fetch_pe_history(soup)
-            # Prefer stock_pe from HTML ratios box; PE chart API often returns 404
             new_pe = ratios.get("stock_pe") or pe_hist.get("pe")
+            db = get_client()
             if new_pe:
-                db = get_client()
                 db.table("fundamentals").update(
                     {"pe": new_pe, "pe_12m": pe_hist.get("pe_12m")}
                 ).eq("stock_id", stock_id).execute()
                 log.info("%s: updated pe=%.1f", nse_code, new_pe)
+            _patch_daily_quotes(db, stock_id, ratios)
         return True
 
     result = _get_html(screener_code, force_standalone=force_standalone)
@@ -495,16 +513,16 @@ def fetch_and_store(nse_code: str, screener_code: str | None = None, force_stand
             _upsert_quarterly(stock_id, to_write)
             log.info("%s: upserted %d quarterly rows", nse_code, len(to_write))
 
-    # Always update PE from HTML ratios when _upsert_annual wasn't called
-    # (annual data already present but PE may still be null from before this fix)
+    # Always update PE + market data when _upsert_annual wasn't called
+    db = get_client()
     if not need_annual:
         new_pe = ratios.get("stock_pe") or pe_hist.get("pe")
         if new_pe:
-            db = get_client()
             db.table("fundamentals").update(
                 {"pe": new_pe, "pe_12m": pe_hist.get("pe_12m")}
             ).eq("stock_id", stock_id).execute()
             log.info("%s: updated pe=%.1f", nse_code, new_pe)
+    _patch_daily_quotes(db, stock_id, ratios)
 
     return True
 

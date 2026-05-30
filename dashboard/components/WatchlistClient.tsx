@@ -44,8 +44,21 @@ export type RowData = {
   fy27Remarks:  string | null;
 };
 
-type SortField = "cmpDma50" | "volRatio" | null;
-type SortDir   = "asc" | "desc";
+type SortField    = "cmpDma50" | "volRatio" | null;
+type SortDir      = "asc" | "desc";
+type StockStatus  = "on_radar" | "invested" | "not_interested";
+type StatusFilter = "all" | StockStatus;
+
+const STATUS_LABELS: Record<StockStatus, string> = {
+  on_radar:       "On Radar",
+  invested:       "Invested",
+  not_interested: "Not Interested",
+};
+const STATUS_DOT: Record<StockStatus, string> = {
+  on_radar:       "bg-blue-400",
+  invested:       "bg-emerald-500",
+  not_interested: "bg-gray-400",
+};
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
 const CAP_STYLE: Record<string, string> = {
@@ -274,6 +287,7 @@ export function WatchlistClient({
   const [countdownAll, setCountdownAll]       = useState(0);
   const [searchQuery, setSearchQuery]         = useState("");
   const [filterGoldenCross, setFilterGoldenCross] = useState(false);
+  const [statusFilter, setStatusFilter]       = useState<StatusFilter>("all");
   const [sortField, setSortField]             = useState<SortField>(null);
   const [sortDir, setSortDir]                 = useState<SortDir>("desc");
 
@@ -295,8 +309,18 @@ export function WatchlistClient({
   const [fy27EditVal, setFy27EditVal]         = useState("");
 
   const [notes, setNotes]                     = useState<Record<string, string>>({});
+  const [statuses, setStatuses]               = useState<Record<string, StockStatus>>(() => {
+    if (typeof window === "undefined") return {};
+    const out: Record<string, StockStatus> = {};
+    for (const row of initialRows) {
+      const s = localStorage.getItem(`status_${row.nse_code}`);
+      if (s === "invested" || s === "not_interested" || s === "on_radar") out[row.nse_code] = s;
+    }
+    return out;
+  });
   const [notesModal, setNotesModal]           = useState<{ nse_code: string; name: string } | null>(null);
   const [notesEditText, setNotesEditText]     = useState("");
+  const [notesEditStatus, setNotesEditStatus] = useState<StockStatus>("on_radar");
   const [noteTooltip, setNoteTooltip]         = useState<{ text: string; x: number; y: number } | null>(null);
 
   // Load persisted FY27 overrides and notes: localStorage first (instant), then Supabase sync
@@ -471,10 +495,11 @@ export function WatchlistClient({
     setFy27EditVal(effective != null ? String((effective * 100).toFixed(0)) : "");
   };
 
-  // ── Notes handlers ─────────────────────────────────────────────────────────
+  // ── Notes + Status handlers ────────────────────────────────────────────────
   const openNotes = (row: RowData) => {
     setNotesModal({ nse_code: row.nse_code, name: row.name });
     setNotesEditText(notes[row.nse_code] ?? "");
+    setNotesEditStatus(statuses[row.nse_code] ?? "on_radar");
   };
 
   const saveNotes = () => {
@@ -482,18 +507,20 @@ export function WatchlistClient({
     const text = notesEditText.trim();
     const code = notesModal.nse_code;
 
-    // Update state + localStorage immediately
     setNotes((prev) => ({ ...prev, [code]: text }));
     if (text === "") localStorage.removeItem(`note_${code}`);
     else localStorage.setItem(`note_${code}`, text);
+
+    setStatuses((prev) => ({ ...prev, [code]: notesEditStatus }));
+    localStorage.setItem(`status_${code}`, notesEditStatus);
+
     setNotesModal(null);
 
-    // Persist to Supabase in background
     fetch("/api/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nse_code: code, note: text }),
-    }).catch(() => {/* silent — localStorage still has it */});
+    }).catch(() => {});
   };
 
   // ── Filtered + sorted rows ────────────────────────────────────────────────
@@ -503,6 +530,10 @@ export function WatchlistClient({
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       rows = rows.filter((r) => r.nse_code.toLowerCase().includes(q) || r.name.toLowerCase().includes(q));
+    }
+
+    if (statusFilter !== "all") {
+      rows = rows.filter((r) => (statuses[r.nse_code] ?? "on_radar") === statusFilter);
     }
 
     if (filterGoldenCross) {
@@ -531,7 +562,7 @@ export function WatchlistClient({
     }
 
     return rows;
-  }, [initialRows, deletedCodes, searchQuery, filterGoldenCross, sortField, sortDir, quoteMap]);
+  }, [initialRows, deletedCodes, searchQuery, statusFilter, statuses, filterGoldenCross, sortField, sortDir, quoteMap]);
 
   const activeCount = initialRows.filter((r) => !deletedCodes.has(r.nse_code)).length;
 
@@ -556,6 +587,26 @@ export function WatchlistClient({
           onChange={(e) => setSearchQuery(e.target.value)}
           className="bg-white border border-gray-300 text-gray-800 text-xs rounded px-3 py-1.5 w-44 placeholder-gray-400 focus:outline-none focus:border-gray-500"
         />
+        {/* Status filter tabs */}
+        <div className="flex gap-1">
+          {(["all", "on_radar", "invested", "not_interested"] as const).map((s) => {
+            const label = s === "all" ? "All" : STATUS_LABELS[s];
+            const active = statusFilter === s;
+            const cls = s === "all"
+              ? active ? "bg-gray-700 text-white border-gray-700" : "bg-white border-gray-300 text-gray-500 hover:border-gray-500"
+              : s === "on_radar"
+              ? active ? "bg-blue-600 text-white border-blue-600" : "bg-white border-gray-300 text-gray-500 hover:border-blue-400"
+              : s === "invested"
+              ? active ? "bg-emerald-600 text-white border-emerald-600" : "bg-white border-gray-300 text-gray-500 hover:border-emerald-400"
+              : active ? "bg-gray-500 text-white border-gray-500" : "bg-white border-gray-300 text-gray-500 hover:border-gray-400";
+            return (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                className={`px-2.5 py-1.5 rounded text-xs font-medium border transition-colors ${cls}`}>
+                {label}
+              </button>
+            );
+          })}
+        </div>
         <button
           onClick={() => setFilterGoldenCross((v) => !v)}
           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
@@ -565,7 +616,7 @@ export function WatchlistClient({
           <span className={filterGoldenCross ? "text-emerald-600" : "text-gray-400"}>▲</span>
           50 DMA &gt; 200 DMA
         </button>
-        {(searchQuery || filterGoldenCross || sortField) && (
+        {(searchQuery || statusFilter !== "all" || filterGoldenCross || sortField) && (
           <span className="text-xs text-gray-500">{displayRows.length} of {activeCount} shown</span>
         )}
       </div>
@@ -613,6 +664,7 @@ export function WatchlistClient({
               const cmpDma50   = cmpVsDma50Val(q);
               const hasEvent   = stocksWithEvents.has(row.id);
               const rowNote    = notes[row.nse_code];
+              const rowStatus  = statuses[row.nse_code] ?? "on_radar";
 
               const dma200Color = q?.cmp && q?.dma_200
                 ? Number(q.cmp) > Number(q.dma_200) ? "text-emerald-600" : "text-red-500"
@@ -636,6 +688,12 @@ export function WatchlistClient({
                       <a href={`https://www.screener.in/company/${screenerCode(row.nse_code)}/consolidated/`} target="_blank" rel="noopener noreferrer" title="Open on Screener.in" className="flex items-center">
                         <ExternalLinkIcon />
                       </a>
+                      {rowStatus !== "on_radar" && (
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[rowStatus]}`}
+                          title={STATUS_LABELS[rowStatus]}
+                        />
+                      )}
                       {hasEvent && (
                         <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" title="New event today" />
                       )}
@@ -819,18 +877,41 @@ export function WatchlistClient({
       {/* ── Notes modal ── */}
       {notesModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setNotesModal(null)}>
-          <div className="bg-white rounded-lg border border-gray-200 shadow-xl p-5 w-96" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Notes</h3>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-xl p-5 w-[36rem]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-0.5">Notes &amp; Status</h3>
             <p className="text-xs text-gray-500 mb-3">{notesModal.nse_code} · {notesModal.name}</p>
+
+            {/* Status radio */}
+            <div className="mb-3">
+              <div className="text-xs text-gray-500 mb-1.5 font-medium">Status</div>
+              <div className="flex gap-2">
+                {(["on_radar", "invested", "not_interested"] as const).map((s) => {
+                  const active = notesEditStatus === s;
+                  const cls = s === "on_radar"
+                    ? active ? "border-blue-500 bg-blue-50 text-blue-700 font-medium" : "border-gray-200 text-gray-500 hover:border-blue-300"
+                    : s === "invested"
+                    ? active ? "border-emerald-500 bg-emerald-50 text-emerald-700 font-medium" : "border-gray-200 text-gray-500 hover:border-emerald-300"
+                    : active ? "border-gray-400 bg-gray-100 text-gray-600 font-medium" : "border-gray-200 text-gray-500 hover:border-gray-300";
+                  return (
+                    <button key={s} onClick={() => setNotesEditStatus(s)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs transition-colors ${cls}`}>
+                      <span className={`w-2 h-2 rounded-full ${active ? STATUS_DOT[s] : "bg-gray-300"}`} />
+                      {STATUS_LABELS[s]}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <textarea
               autoFocus
-              className="w-full h-32 text-xs border border-gray-300 rounded p-2 resize-none focus:outline-none focus:border-blue-400 text-gray-800 placeholder-gray-400"
+              className="w-full h-48 text-xs border border-gray-300 rounded p-2.5 resize-y focus:outline-none focus:border-blue-400 text-gray-800 placeholder-gray-400"
               placeholder="Add your notes about this stock…"
               value={notesEditText}
               onChange={(e) => setNotesEditText(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) saveNotes(); }}
             />
-            <p className="text-[10px] text-gray-400 mt-1 mb-3">Tip: ⌘+Enter to save · Stored locally in browser</p>
+            <p className="text-[10px] text-gray-400 mt-1 mb-3">⌘+Enter to save</p>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setNotesModal(null)}
@@ -853,7 +934,7 @@ export function WatchlistClient({
                   }}
                   className="px-3 py-1.5 text-xs rounded border border-red-200 text-red-600 hover:bg-red-50"
                 >
-                  Clear
+                  Clear Note
                 </button>
               )}
               <button
