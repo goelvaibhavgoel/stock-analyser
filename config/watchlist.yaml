@@ -12,6 +12,8 @@ stocks:
   - { nse_code: ETERNAL,     bse_code: "543320", name: Eternal Ltd (formerly Zomato),       sector: IT,      market_cap_bucket: LARGE, groww_slug: zomato-ltd }
   - { nse_code: COFORGE,     bse_code: "532541", name: Coforge Ltd,                         sector: IT,      market_cap_bucket: LARGE, groww_slug: coforge-ltd }
   - { nse_code: EBGNG,       bse_code: "544455", name: GNG Electronics Ltd,                 sector: IT,      market_cap_bucket: SMALL, groww_slug: gng-electronics-ltd }
+  - { nse_code: SASKEN,                          name: Sasken Technologies Ltd,              sector: IT,      market_cap_bucket: MID }
+  - { nse_code: BLS,                             name: BLS International Ltd,                sector: IT,      market_cap_bucket: MID }
 
   # ── ENERGY ───────────────────────────────────────────────────────────
   - { nse_code: JSWENERGY,   bse_code: "533148", name: JSW Energy Ltd,                      sector: Energy,  market_cap_bucket: LARGE, groww_slug: jsw-energy-ltd }
@@ -21,6 +23,7 @@ stocks:
   - { nse_code: WAAREERTL,   bse_code: "534618", name: Waaree Renewable Technologies Ltd,   sector: Energy,  market_cap_bucket: SMALL, groww_slug: waaree-renewable-technologies-ltd }
   - { nse_code: UTLSOLAR,    bse_code: "544613", name: Fujiyama Power Systems Ltd,          sector: Energy,  market_cap_bucket: MID,   groww_slug: fujiyama-power-systems-ltd }
   - { nse_code: ANTELOPUS,   bse_code: "530075", name: Antelopus Selan Energy Ltd,          sector: Energy,  market_cap_bucket: SMALL, groww_slug: antelopus-selan-energy-ltd }
+  - { nse_code: DEEPINDS,                        name: Deep Industries Ltd,                 sector: Energy,  market_cap_bucket: SMALL }
   - { nse_code: KPEL,        bse_code: "539686", name: K.P. Energy Ltd,                     sector: Energy,  market_cap_bucket: SMALL, groww_slug: kp-energy-ltd }
   - { nse_code: SOLEX,       bse_code: "532566", name: Solex Energy Ltd,                    sector: Energy,  market_cap_bucket: SMALL, groww_slug: solex-energy-ltd }
   - { nse_code: SCHNEIDER,   bse_code: "534139", name: Schneider Electric Infrastructure Ltd, sector: Energy, market_cap_bucket: LARGE, groww_slug: schneider-electric-infrastructure-ltd }
@@ -39,11 +42,16 @@ stocks:
   - { nse_code: TARIL,       bse_code: "532953", name: Transformers & Rectifiers India Ltd, sector: Infra,   market_cap_bucket: MID,   groww_slug: transformers-and-rectifiers-india-ltd }
   - { nse_code: VMARCIND,                        name: V-Marc India Ltd,                    sector: Infra,   market_cap_bucket: SMALL }
   - { nse_code: HIRECT,                          name: Hind Rectifiers Ltd,                 sector: Infra,   market_cap_bucket: SMALL }
+  - { nse_code: SPECTRUM,                        name: Spectrum Electrical Industries Ltd,   sector: Infra,   market_cap_bucket: SMALL }
+  - { nse_code: UNIVCABLES,                      name: Universal Cables Ltd,                 sector: Infra,   market_cap_bucket: SMALL }
+  - { nse_code: RRKABEL,                         name: RR Kabel Ltd,                         sector: Infra,   market_cap_bucket: LARGE }
+  - { nse_code: CEIGALL,                         name: Ceigall India Ltd,                    sector: Infra,   market_cap_bucket: MID }
 
   # ── METALS ───────────────────────────────────────────────────────────
   - { nse_code: VENUSPIPES,  bse_code: "543249", name: Venus Pipes and Tubes Ltd,           sector: Metals,  market_cap_bucket: SMALL, groww_slug: venus-pipes-tubes-ltd }
   - { nse_code: LLOYDSME,    bse_code: "512455", name: Lloyds Metals & Energy Ltd,          sector: Metals,  market_cap_bucket: LARGE, groww_slug: lloyds-metals-and-energy-ltd }
   - { nse_code: JAINREC,                         name: Jain Resource Recycling Ltd,         sector: Metals,  market_cap_bucket: MID }
+  - { nse_code: JTLIND,                          name: JTL Industries Ltd,                  sector: Metals,  market_cap_bucket: SMALL }
 
   # ── REALTY ───────────────────────────────────────────────────────────
   - { nse_code: EFCIL,       bse_code: "512008", name: EFC (I) Ltd,                         sector: Realty,  market_cap_bucket: SMALL }
@@ -53,6 +61,7 @@ stocks:
   - { nse_code: GLAND,       bse_code: "543245", name: Gland Pharma Ltd,                    sector: Pharma,  market_cap_bucket: MID,   groww_slug: gland-pharma-ltd }
   - { nse_code: CAPLIPOINT,  bse_code: "524742", name: Caplin Point Laboratories Ltd,       sector: Pharma,  market_cap_bucket: MID,   groww_slug: caplin-point-laboratories-ltd }
   - { nse_code: HESTER,      bse_code: "524669", name: Hester Biosciences Ltd,              sector: Pharma,  market_cap_bucket: SMALL, groww_slug: hester-biosciences-ltd, screener_code: HESTERBIO }
+  - { nse_code: SENORES,                         name: Senores Pharmaceuticals Ltd,         sector: Pharma,  market_cap_bucket: SMALL }
 
   # ── CHEMICALS / AGRO ─────────────────────────────────────────────────
   - { nse_code: DHANUKA,     bse_code: "507717", name: Dhanuka Agritech Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: dhanuka-agritech-ltd }
@@ -60,6 +69,7 @@ stocks:
   - { nse_code: GOKULAGRO,   bse_code: "539725", name: Gokul Agro Resources Ltd,           sector: Chemicals, market_cap_bucket: SMALL, groww_slug: gokul-agro-resources-ltd }
   - { nse_code: AARTIIND,    bse_code: "524208", name: Aarti Industries Ltd,                sector: Chemicals, market_cap_bucket: MID,  groww_slug: aarti-industries-ltd }
   - { nse_code: ACUTAAS,                         name: Acutaas Chemicals Ltd,               sector: Chemicals, market_cap_bucket: LARGE }
+  - { nse_code: SHAILY,                          name: Shaily Engineering Plastics Ltd,     sector: Chemicals, market_cap_bucket: SMALL, force_standalone: true }
 
   # ── DEFENCE / AEROSPACE ──────────────────────────────────────────────
   - { nse_code: DATAPATTNS,  bse_code: "543428", name: Data Patterns (India) Ltd,           sector: Defence, market_cap_bucket: MID,   groww_slug: data-patterns-india-ltd }
@@ -72,6 +82,8 @@ stocks:
   # ── AUTO ─────────────────────────────────────────────────────────────
   - { nse_code: RANEHOLDIN,  bse_code: "505036", name: Rane Holdings Ltd,                   sector: Auto,    market_cap_bucket: SMALL, groww_slug: rane-holdings-ltd }
   - { nse_code: PRECAM,      bse_code: "539636", name: Precision Camshafts Ltd,             sector: Auto,    market_cap_bucket: SMALL, groww_slug: precision-camshafts-ltd }
+  - { nse_code: OMAXAUTO,                        name: Omax Autos Ltd,                      sector: Auto,    market_cap_bucket: SMALL, force_standalone: true }
+  - { nse_code: PRICOLLTD,                       name: Pricol Ltd,                          sector: Auto,    market_cap_bucket: MID }
 
   # ── FMCG / CONSUMER ──────────────────────────────────────────────────
   - { nse_code: SKYGOLD,     bse_code: "541967", name: Sky Gold Ltd,                        sector: FMCG,    market_cap_bucket: SMALL, groww_slug: sky-gold-ltd }
