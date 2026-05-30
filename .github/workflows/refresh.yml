@@ -2,6 +2,8 @@ name: Daily Pipeline Refresh
 
 on:
   schedule:
+    # Weekdays at 03:30 UTC = 9:00 AM IST
+    - cron: "30 3 * * 1-5"
     # Weekdays at 08:30 UTC = 2:00 PM IST
     - cron: "30 8 * * 1-5"
   workflow_dispatch:

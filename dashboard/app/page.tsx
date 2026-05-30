@@ -30,7 +30,7 @@ async function getData(): Promise<{ rows: RowData[]; stocksWithEvents: Set<numbe
       .limit(stockIds.length * 10),
     supabase
       .from("fundamentals")
-      .select("stock_id,period,revenue,net_profit")
+      .select("stock_id,period,revenue,net_profit,pe")
       .in("stock_id", stockIds)
       .in("period", ["FY25", "FY26"]),
     supabase
@@ -76,6 +76,15 @@ async function getData(): Promise<{ rows: RowData[]; stocksWithEvents: Set<numbe
   const stocksWithEvents = new Set<number>(
     (eventsRes.data ?? []).map((e: any) => e.stock_id)
   );
+
+  // PE fallback: daily_quotes.pe is from NSE (blocked in GH Actions), so use
+  // fundamentals.pe (scraped from screener.in ratios box) when it's null
+  for (const [idStr, row] of Object.entries(quoteMap)) {
+    if (row.pe == null) {
+      const fund = fundMap[Number(idStr)];
+      row.pe = fund?.["FY26"]?.pe ?? fund?.["FY25"]?.pe ?? null;
+    }
+  }
 
   return {
     rows: stocks.map((s) => {

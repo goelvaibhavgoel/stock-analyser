@@ -288,6 +288,8 @@ def _parse_ratios(soup: BeautifulSoup) -> dict:
         val  = _float(val_el.get_text(strip=True))
         if "industry pe" in name:
             out["sector_pe"] = val
+        elif "stock p/e" in name or name == "p/e":
+            out["stock_pe"] = val
         elif "52 week high" in name or "high / low" in name:
             # Some layouts show "High / Low" as "2700 / 1800"
             raw = val_el.get_text(strip=True)
@@ -408,7 +410,8 @@ def _upsert_annual(stock_id: int, rows: list[dict], ratios: dict, pe_hist: dict)
                 "net_profit":   row["net_profit"],
                 "promoter_pct": ratios.get("promoter_pct"),
                 "sector_pe":    ratios.get("sector_pe"),
-                "pe":           pe_hist.get("pe"),
+                # stock_pe from HTML ratios box is reliable; PE chart API often 404s
+                "pe":           ratios.get("stock_pe") or pe_hist.get("pe"),
                 "pe_12m":       pe_hist.get("pe_12m"),
             },
             on_conflict="stock_id,period",
@@ -446,17 +449,20 @@ def fetch_and_store(nse_code: str, screener_code: str | None = None, force_stand
     need_quarters = [fq for fq in target_quarters if _quarter_needs_fetch(stock_id, *fq)]
 
     if not need_annual and not need_quarters:
-        log.info("%s: all static data already in DB — skipping screener.in fetch", nse_code)
-        # Still update PE history (it's a market-derived reference)
+        log.info("%s: all static data already in DB — updating PE only", nse_code)
         result = _get_html(screener_code, force_standalone=force_standalone)
         if result:
             soup = BeautifulSoup(result[0], "lxml")
+            ratios  = _parse_ratios(soup)
             pe_hist = _fetch_pe_history(soup)
-            if pe_hist:
+            # Prefer stock_pe from HTML ratios box; PE chart API often returns 404
+            new_pe = ratios.get("stock_pe") or pe_hist.get("pe")
+            if new_pe:
                 db = get_client()
                 db.table("fundamentals").update(
-                    {"pe": pe_hist.get("pe"), "pe_12m": pe_hist.get("pe_12m")}
+                    {"pe": new_pe, "pe_12m": pe_hist.get("pe_12m")}
                 ).eq("stock_id", stock_id).execute()
+                log.info("%s: updated pe=%.1f", nse_code, new_pe)
         return True
 
     result = _get_html(screener_code, force_standalone=force_standalone)
@@ -488,6 +494,17 @@ def fetch_and_store(nse_code: str, screener_code: str | None = None, force_stand
         if to_write:
             _upsert_quarterly(stock_id, to_write)
             log.info("%s: upserted %d quarterly rows", nse_code, len(to_write))
+
+    # Always update PE from HTML ratios when _upsert_annual wasn't called
+    # (annual data already present but PE may still be null from before this fix)
+    if not need_annual:
+        new_pe = ratios.get("stock_pe") or pe_hist.get("pe")
+        if new_pe:
+            db = get_client()
+            db.table("fundamentals").update(
+                {"pe": new_pe, "pe_12m": pe_hist.get("pe_12m")}
+            ).eq("stock_id", stock_id).execute()
+            log.info("%s: updated pe=%.1f", nse_code, new_pe)
 
     return True
 
