@@ -178,15 +178,6 @@ function SortArrows({ field, sortField, sortDir }: { field: SortField; sortField
   return <span className="text-blue-600 leading-none">{sortDir === "asc" ? "↑" : "↓"}</span>;
 }
 
-// ── Market-hours guard (IST = UTC+5:30, Mon–Fri 9:15–16:00) ──────────────────
-function isMarketHours(): boolean {
-  const nowIST = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
-  const day = nowIST.getUTCDay();
-  if (day === 0 || day === 6) return false;
-  const mins = nowIST.getUTCHours() * 60 + nowIST.getUTCMinutes();
-  return mins >= 9 * 60 + 15 && mins < 16 * 60;
-}
-
 // ── Fetch helpers ─────────────────────────────────────────────────────────────
 // Limit large enough to cover many null-CMP days + real data beyond them
 const QUOTE_ROW_MULTIPLIER = 10;
@@ -224,7 +215,7 @@ async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp:
     .in("stock_id", stockIds)
     .not("cmp", "is", null)
     .order("date", { ascending: false })
-    .limit(stockIds.length);
+    .limit(stockIds.length * QUOTE_ROW_MULTIPLIER);
   const map: Record<number, { cmp: number | null; pct_change: number | null }> = {};
   for (const q of (data ?? []) as any[]) {
     if (!map[q.stock_id]) map[q.stock_id] = { cmp: q.cmp, pct_change: q.pct_change };
@@ -832,7 +823,7 @@ export function WatchlistClient({
         <span>Rev/NP growth: <span className="text-emerald-600">≥20%</span> · <span className="text-orange-500">0-10%</span> · <span className="text-red-500">negative</span></span>
         <span>CMP/DMA-50: <span className="text-emerald-600">+ve</span>=above · <span className="text-red-500">-ve</span>=below</span>
         <span>Vol ratio: <span className="text-emerald-600">≥1.5×</span> elevated · <span className="text-red-500">≤0.7×</span> suppressed</span>
-        <span className="ml-auto text-gray-400 italic">CMP auto-refreshes every 5 min · Mon–Fri 9:15–16:00 IST</span>
+        <span className="ml-auto text-gray-400 italic">CMP auto-refreshes every 5 min</span>
       </div>
 
       {/* ── Delete confirmation modal ── */}
