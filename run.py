@@ -198,7 +198,18 @@ def main() -> None:
 
     run_id = create_run()
     try:
-        sync_watchlist(stocks)
+        # When running for a single stock, upsert only that stock — never delete others
+        if args.nse_code:
+            for s in stocks:
+                upsert_stock(
+                    nse_code=s["nse_code"],
+                    bse_code=s.get("bse_code", ""),
+                    name=s["name"],
+                    sector=s.get("sector", ""),
+                    market_cap_bucket=s.get("market_cap_bucket", ""),
+                )
+        else:
+            sync_watchlist(stocks)
 
         if args.phase in ("technical", "all"):
             phase_technical(stocks, run_date)
