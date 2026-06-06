@@ -82,30 +82,32 @@ export async function POST(req: NextRequest) {
   const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 
   const body = (await req.json()) as {
-    nse_code: string; name: string; sector: string; market_cap_bucket: string; screener_url: string;
+    nse_code: string; name: string; screener_url?: string;
   };
 
-  const { nse_code, name, sector, market_cap_bucket, screener_url } = body;
-  if (!nse_code || !name || !sector || !market_cap_bucket) {
-    return NextResponse.json({ error: "nse_code, name, sector, market_cap_bucket required" }, { status: 400 });
+  const { nse_code, name, screener_url = "" } = body;
+  if (!nse_code || !name) {
+    return NextResponse.json({ error: "nse_code and name required" }, { status: 400 });
   }
 
-  // 1. Upsert into Supabase stocks table
+  const code = nse_code.toUpperCase();
+
+  // 1. Upsert into Supabase stocks table (sector/market_cap_bucket left blank; pipeline fills them)
   const { error: dbErr } = await supabase
     .from("stocks")
-    .upsert({ nse_code: nse_code.toUpperCase(), name, sector, market_cap_bucket: market_cap_bucket.toUpperCase() }, { onConflict: "nse_code" });
+    .upsert({ nse_code: code, name, sector: "", market_cap_bucket: "" }, { onConflict: "nse_code" });
   if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
 
   // 2. Append to watchlist.yaml via GitHub API
   try {
-    await appendToWatchlist(token, { nse_code: nse_code.toUpperCase(), name, sector, market_cap_bucket, screener_url });
+    await appendToWatchlist(token, { nse_code: code, name, sector: "", market_cap_bucket: "MID", screener_url });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: `watchlist update failed: ${msg}` }, { status: 500 });
   }
 
   // 3. Dispatch refresh_single workflow to populate data
-  await dispatchRefresh(token, nse_code.toUpperCase());
+  await dispatchRefresh(token, code);
 
   return NextResponse.json({ ok: true });
 }

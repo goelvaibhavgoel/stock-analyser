@@ -333,7 +333,7 @@ export function WatchlistClient({
 
   // ── Add-stock modal state ──────────────────────────────────────────────────
   const [addModal, setAddModal]                 = useState(false);
-  const [addForm, setAddForm]                   = useState({ nse_code: "", name: "", sector: SECTORS[0], market_cap_bucket: "MID", screener_url: "" });
+  const [addForm, setAddForm]                   = useState({ nse_code: "", name: "", screener_url: "" });
   const [addLoading, setAddLoading]             = useState(false);
   const [addError, setAddError]                 = useState("");
 
@@ -569,7 +569,7 @@ export function WatchlistClient({
 
   // ── Add-stock handler ──────────────────────────────────────────────────────
   const handleAddStock = async () => {
-    const { nse_code, name, sector, market_cap_bucket, screener_url } = addForm;
+    const { nse_code, name, screener_url } = addForm;
     if (!nse_code.trim() || !name.trim()) { setAddError("NSE Code and Name are required."); return; }
     setAddLoading(true);
     setAddError("");
@@ -577,12 +577,12 @@ export function WatchlistClient({
       const res = await fetch("/api/add-stock", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nse_code: nse_code.trim().toUpperCase(), name: name.trim(), sector, market_cap_bucket, screener_url: screener_url.trim() }),
+        body: JSON.stringify({ nse_code: nse_code.trim().toUpperCase(), name: name.trim(), screener_url: screener_url.trim() }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setAddModal(false);
-      setAddForm({ nse_code: "", name: "", sector: SECTORS[0], market_cap_bucket: "MID", screener_url: "" });
+      setAddForm({ nse_code: "", name: "", screener_url: "" });
       router.refresh();
     } catch (err: unknown) {
       setAddError(err instanceof Error ? err.message : "Unknown error");
@@ -1071,29 +1071,6 @@ export function WatchlistClient({
                   value={addForm.name}
                   onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
                 />
-              </div>
-
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <label className="text-xs text-gray-500 font-medium block mb-1">Sector</label>
-                  <select
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 bg-white"
-                    value={addForm.sector}
-                    onChange={(e) => setAddForm((p) => ({ ...p, sector: e.target.value }))}
-                  >
-                    {SECTORS.map((s) => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="w-28">
-                  <label className="text-xs text-gray-500 font-medium block mb-1">Market Cap</label>
-                  <select
-                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 bg-white"
-                    value={addForm.market_cap_bucket}
-                    onChange={(e) => setAddForm((p) => ({ ...p, market_cap_bucket: e.target.value }))}
-                  >
-                    {CAP_BUCKETS.map((b) => <option key={b}>{b}</option>)}
-                  </select>
-                </div>
               </div>
 
               <div>
