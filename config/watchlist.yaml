@@ -94,4 +94,4 @@ stocks:
   - { nse_code: PNGJL,                           name: PN Gadgil Jewellers Ltd,             sector: FMCG,    market_cap_bucket: MID }
   - { nse_code: SHANTIGOLD,  bse_code: "544459", name: Shanti Gold International Ltd,       sector: FMCG,    market_cap_bucket: SMALL }
   - { nse_code: SAFEENTP,                        name: Safe Enterprises Retail Fixtures Ltd, sector: FMCG,   market_cap_bucket: SMALL }
-  - { nse_code: NAUKRI      , name: infoedge, sector: , market_cap_bucket: MID }
+  - { nse_code: NAUKRI,       name: Info Edge India Ltd,                         sector: IT,      market_cap_bucket: LARGE }

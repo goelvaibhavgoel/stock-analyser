@@ -95,12 +95,12 @@ export async function POST(req: NextRequest) {
   // 1. Upsert into Supabase stocks table (sector/market_cap_bucket left blank; pipeline fills them)
   const { error: dbErr } = await supabase
     .from("stocks")
-    .upsert({ nse_code: code, name, sector: "", market_cap_bucket: "" }, { onConflict: "nse_code" });
+    .upsert({ nse_code: code, name, sector: "IT", market_cap_bucket: "MID" }, { onConflict: "nse_code" });
   if (dbErr) return NextResponse.json({ error: dbErr.message }, { status: 500 });
 
   // 2. Append to watchlist.yaml via GitHub API
   try {
-    await appendToWatchlist(token, { nse_code: code, name, sector: "", market_cap_bucket: "MID", screener_url });
+    await appendToWatchlist(token, { nse_code: code, name, sector: "IT", market_cap_bucket: "MID", screener_url });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: `watchlist update failed: ${msg}` }, { status: 500 });
