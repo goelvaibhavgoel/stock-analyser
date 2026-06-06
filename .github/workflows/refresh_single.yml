@@ -1,0 +1,48 @@
+name: Refresh Single Stock
+
+on:
+  workflow_dispatch:
+    inputs:
+      nse_code:
+        description: "NSE code to refresh (e.g. ZAGGLE)"
+        required: true
+        type: string
+      phases:
+        description: "Phases to run (comma-separated)"
+        required: false
+        default: "technical,fundamental"
+
+jobs:
+  refresh:
+    name: Refresh ${{ github.event.inputs.nse_code }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env: &env
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: sudo apt-get install -y tesseract-ocr
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install deps
+        run: uv sync
+
+      - name: Technical phase
+        if: ${{ contains(github.event.inputs.phases || 'technical,fundamental', 'technical') }}
+        run: uv run python run.py --phase technical --nse_code "${{ github.event.inputs.nse_code }}"
+        env: *env
+
+      - name: Fundamental phase
+        if: ${{ contains(github.event.inputs.phases || 'technical,fundamental', 'fundamental') }}
+        run: uv run python run.py --phase fundamental --nse_code "${{ github.event.inputs.nse_code }}"
+        env: *env

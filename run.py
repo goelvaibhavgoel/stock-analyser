@@ -176,10 +176,21 @@ def main() -> None:
         default=None,
         help="Only process the first N stocks from the watchlist",
     )
+    parser.add_argument(
+        "--nse_code",
+        type=str,
+        default=None,
+        help="Only process this single NSE code",
+    )
     args = parser.parse_args()
 
     stocks = load_watchlist()
-    if args.limit:
+    if args.nse_code:
+        stocks = [s for s in stocks if s["nse_code"] == args.nse_code]
+        if not stocks:
+            log.error("NSE code %r not found in watchlist", args.nse_code)
+            sys.exit(1)
+    elif args.limit:
         stocks = stocks[: args.limit]
     run_date = date.today().isoformat()
 

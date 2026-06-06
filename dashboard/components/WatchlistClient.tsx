@@ -173,6 +173,15 @@ function TrashIcon({ className = "" }: { className?: string }) {
   );
 }
 
+function RefreshRowIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="23 4 23 10 17 10" />
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+    </svg>
+  );
+}
+
 function SortArrows({ field, sortField, sortDir }: { field: SortField; sortField: SortField; sortDir: SortDir }) {
   if (sortField !== field) return <span className="text-gray-400 leading-none">↕</span>;
   return <span className="text-blue-600 leading-none">{sortDir === "asc" ? "↑" : "↓"}</span>;
@@ -223,11 +232,15 @@ async function fetchLatestCmp(stockIds: number[]): Promise<Record<number, { cmp:
   return map;
 }
 
-// ── Refresh button ────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 type BtnState = "idle" | "triggering" | "waiting" | "done" | "error";
-const QUICK_WAIT_S  = 3 * 60;          // 3 min — refresh_cmp.yml takes ~2-3 min
-const ALL_WAIT_S    = 18 * 60;         // 18 min — full refresh.yml takes ~15-18 min
-const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 min — always re-read Supabase
+const QUICK_WAIT_S    = 3 * 60;
+const ALL_WAIT_S      = 18 * 60;
+const SINGLE_WAIT_S   = 5 * 60;        // 5 min — refresh_single.yml
+const AUTO_REFRESH_MS = 5 * 60 * 1000;
+
+const SECTORS = ["Auto","Banking","Chemicals","Defence","Energy","FMCG","Healthcare","IT","Infra","Metals","Pharma","Realty"];
+const CAP_BUCKETS = ["LARGE","MID","SMALL"];
 
 function Spinner() {
   return <span className="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />;
@@ -313,6 +326,16 @@ export function WatchlistClient({
   const [notesEditText, setNotesEditText]     = useState("");
   const [notesEditStatus, setNotesEditStatus] = useState<StockStatus>("on_radar");
   const [noteTooltip, setNoteTooltip]         = useState<{ text: string; x: number; y: number } | null>(null);
+
+  // ── Per-row refresh state ──────────────────────────────────────────────────
+  const [rowRefreshState, setRowRefreshState]   = useState<Record<string, BtnState>>({});
+  const rowRefreshTimers                         = useRef<Record<string, ReturnType<typeof setInterval>>>({});
+
+  // ── Add-stock modal state ──────────────────────────────────────────────────
+  const [addModal, setAddModal]                 = useState(false);
+  const [addForm, setAddForm]                   = useState({ nse_code: "", name: "", sector: SECTORS[0], market_cap_bucket: "MID", screener_url: "" });
+  const [addLoading, setAddLoading]             = useState(false);
+  const [addError, setAddError]                 = useState("");
 
   // Load persisted FY27 overrides and notes: localStorage first (instant), then Supabase sync
   useEffect(() => {
@@ -514,6 +537,60 @@ export function WatchlistClient({
     }).catch(() => {});
   };
 
+  // ── Per-row refresh handler ────────────────────────────────────────────────
+  const handleRowRefresh = async (nse_code: string) => {
+    setRowRefreshState((p) => ({ ...p, [nse_code]: "triggering" }));
+    try {
+      const res = await fetch("/api/refresh-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nse_code }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setRowRefreshState((p) => ({ ...p, [nse_code]: "waiting" }));
+      let remaining = SINGLE_WAIT_S;
+      rowRefreshTimers.current[nse_code] = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) {
+          clearInterval(rowRefreshTimers.current[nse_code]);
+          reloadQuotes();
+          setRowRefreshState((p) => ({ ...p, [nse_code]: "done" }));
+          setTimeout(() => setRowRefreshState((p) => ({ ...p, [nse_code]: "idle" })), 3000);
+        }
+      }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      alert(`Refresh failed: ${msg}`);
+      setRowRefreshState((p) => ({ ...p, [nse_code]: "error" }));
+      setTimeout(() => setRowRefreshState((p) => ({ ...p, [nse_code]: "idle" })), 3000);
+    }
+  };
+
+  // ── Add-stock handler ──────────────────────────────────────────────────────
+  const handleAddStock = async () => {
+    const { nse_code, name, sector, market_cap_bucket, screener_url } = addForm;
+    if (!nse_code.trim() || !name.trim()) { setAddError("NSE Code and Name are required."); return; }
+    setAddLoading(true);
+    setAddError("");
+    try {
+      const res = await fetch("/api/add-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nse_code: nse_code.trim().toUpperCase(), name: name.trim(), sector, market_cap_bucket, screener_url: screener_url.trim() }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setAddModal(false);
+      setAddForm({ nse_code: "", name: "", sector: SECTORS[0], market_cap_bucket: "MID", screener_url: "" });
+      router.refresh();
+    } catch (err: unknown) {
+      setAddError(err instanceof Error ? err.message : "Unknown error");
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
   // ── Filtered + sorted rows ────────────────────────────────────────────────
   const displayRows = useMemo(() => {
     let rows = initialRows.filter((r) => !deletedCodes.has(r.nse_code));
@@ -567,6 +644,12 @@ export function WatchlistClient({
         <span className="ml-auto text-xs text-gray-400">
           {activeCount} stocks · as of {latestDate}
         </span>
+        <button
+          onClick={() => { setAddModal(true); setAddError(""); }}
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+        >
+          + Add Stock
+        </button>
       </div>
 
       {/* ── Controls bar ── */}
@@ -801,6 +884,29 @@ export function WatchlistClient({
                       >
                         <NoteIcon className="w-3.5 h-3.5" />
                       </button>
+                      {/* Per-stock refresh */}
+                      {(() => {
+                        const rs = rowRefreshState[row.nse_code] ?? "idle";
+                        const busy = rs === "triggering" || rs === "waiting";
+                        return (
+                          <button
+                            onClick={() => !busy && handleRowRefresh(row.nse_code)}
+                            title={rs === "done" ? "Refreshed!" : rs === "waiting" ? "Refreshing…" : `Refresh ${row.nse_code}`}
+                            disabled={busy}
+                            className={`p-1 rounded transition-colors ${
+                              rs === "done"    ? "text-emerald-500" :
+                              rs === "error"   ? "text-red-400" :
+                              busy             ? "text-blue-300 cursor-not-allowed" :
+                              "text-gray-300 hover:text-blue-500"
+                            }`}
+                          >
+                            {busy
+                              ? <span className="inline-block w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              : <RefreshRowIcon className="w-3.5 h-3.5" />
+                            }
+                          </button>
+                        );
+                      })()}
                       <button
                         onClick={() => setDeleteConfirm({ id: row.id, nse_code: row.nse_code, name: row.name })}
                         title="Remove from watchlist"
@@ -933,6 +1039,94 @@ export function WatchlistClient({
                 className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700"
               >
                 Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Add Stock modal ── */}
+      {addModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => !addLoading && setAddModal(false)}>
+          <div className="bg-white rounded-lg border border-gray-200 shadow-xl p-5 w-[28rem]" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Add Stock to Watchlist</h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">NSE Code <span className="text-red-400">*</span></label>
+                <input
+                  autoFocus
+                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 uppercase placeholder-gray-400"
+                  placeholder="e.g. ZAGGLE"
+                  value={addForm.nse_code}
+                  onChange={(e) => setAddForm((p) => ({ ...p, nse_code: e.target.value.toUpperCase() }))}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">Company Name <span className="text-red-400">*</span></label>
+                <input
+                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400"
+                  placeholder="e.g. Zaggle Prepaid Ocean Services Ltd"
+                  value={addForm.name}
+                  onChange={(e) => setAddForm((p) => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <label className="text-xs text-gray-500 font-medium block mb-1">Sector</label>
+                  <select
+                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 bg-white"
+                    value={addForm.sector}
+                    onChange={(e) => setAddForm((p) => ({ ...p, sector: e.target.value }))}
+                  >
+                    {SECTORS.map((s) => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="w-28">
+                  <label className="text-xs text-gray-500 font-medium block mb-1">Market Cap</label>
+                  <select
+                    className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 bg-white"
+                    value={addForm.market_cap_bucket}
+                    onChange={(e) => setAddForm((p) => ({ ...p, market_cap_bucket: e.target.value }))}
+                  >
+                    {CAP_BUCKETS.map((b) => <option key={b}>{b}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 font-medium block mb-1">Screener URL</label>
+                <input
+                  className="w-full text-xs border border-gray-300 rounded px-2.5 py-1.5 focus:outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400"
+                  placeholder="https://www.screener.in/company/ZAGGLE/consolidated/"
+                  value={addForm.screener_url}
+                  onChange={(e) => setAddForm((p) => ({ ...p, screener_url: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            {addError && <p className="text-xs text-red-500 mt-2">{addError}</p>}
+
+            <p className="text-[10px] text-gray-400 mt-3">
+              Stock will be added to Supabase + watchlist.yaml and a pipeline run will start (~5 min to populate data).
+            </p>
+
+            <div className="flex gap-2 justify-end mt-3">
+              <button
+                onClick={() => setAddModal(false)}
+                disabled={addLoading}
+                className="px-3 py-1.5 text-xs rounded border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddStock}
+                disabled={addLoading}
+                className="px-3 py-1.5 text-xs rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {addLoading ? <><span className="inline-block w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving…</> : "Save"}
               </button>
             </div>
           </div>
