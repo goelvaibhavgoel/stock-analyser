@@ -96,3 +96,4 @@ stocks:
   - { nse_code: SAFEENTP,                        name: Safe Enterprises Retail Fixtures Ltd, sector: FMCG,   market_cap_bucket: SMALL }
   - { nse_code: ATLANTAELE  , name: Atlanta Electricals, sector: IT, market_cap_bucket: MID }
   - { nse_code: AWL         , name: AWL Agri, sector: IT, market_cap_bucket: MID }
+  - { nse_code: GULPOLY     , name: Gulshan Polycol, sector: IT, market_cap_bucket: MID }
